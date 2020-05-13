@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Random Developer&#39;s Blog</title>
+    <link>https://mister11.github.io/</link>
+    <description>Recent content on Random Developer&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 13 May 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://mister11.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Introduction to Project Reactor</title>
+      <link>https://mister11.github.io/posts/project_reactor_intro/</link>
+      <pubDate>Wed, 13 May 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mister11.github.io/posts/project_reactor_intro/</guid>
+      <description>In the first post we&amp;rsquo;ve learned about Reactive Streams specification and the next logical thing would be to take a look at one of its implementations. In our case, this will be Project Reactor as it comes bundled with Spring Framework which will be useful in the upcoming posts. We&amp;rsquo;ve seen basic types that Project Reactor library offers and in this post we will go through them in more detail.</description>
+    </item>
+    
+    <item>
+      <title>Hello, Reactive Streams!</title>
+      <link>https://mister11.github.io/posts/hello_reactive_streams/</link>
+      <pubDate>Tue, 05 May 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://mister11.github.io/posts/hello_reactive_streams/</guid>
+      <description>In recent years, it seems like reactive programming has found its place in the world of software development. This is especially obvious when you look at both mobile platforms (Android and iOS) as well as JavaScript and libraries like RxJava, RxSwift, and RxJS. Handling user interactions with a UI, making API calls in parallel and maybe even sending events to an analytics server while keeping your app from stuttering in an environment that has limited resources is not an easy job.</description>
+    </item>
+    
+    <item>
+      <title>About</title>
+      <link>https://mister11.github.io/about/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://mister11.github.io/about/</guid>
+      <description>After getting my Master&amp;rsquo;s degree in Computer Science at FER in 2016. I&amp;rsquo;ve signed up and finished Infinum Student Android Academy and got a job as an Android Engineer at Infinum.
+After almost 3 years I&amp;rsquo;ve realized that frontend is not something I want to do for the rest of my life so I moved to backend and I end up in the Infinum&amp;rsquo;s Java/Scala team on super interesting IoT projects.</description>
+    </item>
+    
+  </channel>
+</rss>

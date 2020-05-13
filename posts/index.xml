@@ -1,0 +1,256 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+	<channel>
+		<title>Posts on Random Developer&#39;s Blog</title>
+		<link>https://mister11.github.io/posts/</link>
+		<description>Recent content in Posts on Random Developer&#39;s Blog</description>
+		<generator>Hugo -- gohugo.io</generator>
+		<language>en-us</language>
+		<lastBuildDate>Wed, 13 May 2020 00:00:00 +0000</lastBuildDate>
+		<atom:link href="https://mister11.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>Introduction to Project Reactor</title>
+			<link>https://mister11.github.io/posts/project_reactor_intro/</link>
+			<pubDate>Wed, 13 May 2020 00:00:00 +0000</pubDate>
+			
+			<guid>https://mister11.github.io/posts/project_reactor_intro/</guid>
+			<description>In the first post we&amp;rsquo;ve learned about Reactive Streams specification and the next logical thing would be to take a look at one of its implementations. In our case, this will be Project Reactor as it comes bundled with Spring Framework which will be useful in the upcoming posts. We&amp;rsquo;ve seen basic types that Project Reactor library offers and in this post we will go through them in more detail.</description>
+			<content type="html"><![CDATA[<p>In the <a href="https://mister11.github.io/hello_reactive_streams/">first post</a> we&rsquo;ve learned about Reactive Streams specification and the next logical thing would be to take a look at one of its implementations. In our case, this will be <a href="https://projectreactor.io/">Project Reactor</a> as it comes bundled with Spring Framework which will be useful in the upcoming posts. We&rsquo;ve seen basic types that Project Reactor library offers and in this post we will go through them in more detail.</p>
+<p>But, before we dive into it, we have to learn one important concept that will follow us throughout reactive documentation - marble diagrams.</p>
+<h1 id="marble-diagrams">Marble diagrams</h1>
+<p>Marble diagrams are (interactive) diagrams that explain how a reactive operator works. We&rsquo;ll get to operators later, but for now, it&rsquo;s enough to think of them as a simple processing step similar to <code>map</code> or <code>filter</code>.</p>
+<figure>
+    <img src="/project_reactor_intro/mono_marble.png"
+         alt="Mono marble diagram"/> 
+</figure>
+
+<p>Independently of operator complexity or stream size (1 or more elements), every marble diagram has 5 components: input stream, input stream&rsquo;s terminating operation, operator definition, output stream, and output stream&rsquo;s termination operation. Have in mind that these 5 components are not standardized, it&rsquo;s just a way I like to break down marbles diagrams to make them easier to explain.</p>
+<p>The <strong>input stream</strong> is our current stream of data (like data from a database, external service, queue, etc.) and it&rsquo;s represented with a green circle in the picture above. That stream will <strong>terminate either successfully or it will error</strong>. In the picture above, the vertical line at the end of the input stream means stream ended successfully (<code>onComplete</code> or <code>onSuccess</code> were called). The <strong>operator definition</strong> is different for each operator, but it will usually have either lambda written in the box or some shapes to better visualize how input is transformed to an output. The <strong>output stream</strong> is our input stream transformed using an operator. Depending on the operator it can have the same (<code>map</code>) or different number (<code>filter</code>) of elements than input stream, but, same as an input stream, it can either <strong>finish successfully or it can error</strong>. In the picture above, the output stream will error and that is represented with red X. In case of success, there would also be a circle as for the input stream.</p>
+<p>The picture above (and all of the others in the post) are taken from the Project Reactor&rsquo;s documentation. Some other sources will have a bit different notation, but, in general, you&rsquo;ll always be able to spot those 5 components. For example, there a great page called <a href="https://rxmarbles.com/">RxMarbles</a> which has interactive diagrams for some operators and it uses diagrams that look a bit different, but they still contain all 5 mentioned components. Don&rsquo;t let the page title (RxJS Marbles) scare you - as I said before, the operator&rsquo;s implementation is mostly the same across all Reactive Streams implementations and that page can be used to get a better feeling of how some operators work.</p>
+<h1 id="mono">Mono</h1>
+<p><a href="https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html"><code>Mono&lt;T&gt;</code></a> is one of the 3 implementations of <code>Publisher&lt;T&gt;</code> interface and it&rsquo;s the simplest one. We usually talk about streams of data, but <code>Mono&lt;T&gt;</code> is actually not a stream in a conventional way since it will produce 0 or 1 item and complete after that (of course, it can still terminate with an error). Because of that, most often we use <code>Mono&lt;T&gt;</code> when fetching a particular resource from somewhere or if we want to check cache. Of course, we can put in whichever type we want, even a list if we don&rsquo;t care about processing each particular item.</p>
+<h2 id="simple-creation-and-consumption-of-a-mono">Simple creation and consumption of a Mono</h2>
+<p><code>Mono&lt;T&gt;</code> class has a bunch of <code>from*</code> factory methods that let us create it given some lambda expression, but there is also the simplest method for creating it called <code>just</code>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="m">42</span><span class="p">)</span>
+<span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="s">&#34;Testing Mono&#34;</span><span class="p">)</span>
+<span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">2</span><span class="p">,</span><span class="m">3</span><span class="p">))</span>
+</code></pre></div><p>These three lines will only create three <code>Mono&lt;T&gt;</code> objects: <code>Mono&lt;Int&gt;</code>, <code>Mono&lt;String&gt;</code> and <code>Mono&lt;List&lt;Int&gt;&gt;</code>, but nothing will happen if we try to print out any of the created objects. In fact, even if we add 100 operators to any of it, nothing will happen. Stream processing starts only when someone subscribes to the stream using <code>subscribe(subscriber: Subscriber&lt;T&gt;)</code> method and anything before that call is like a template for whatever we want to do with our stream. Because of that, we say that reactive streams are lazy as no computation will happen before someone is ready to receive a result.</p>
+<p>So, to consume streams created above, we have to subscribe to them:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="m">42</span><span class="p">)</span>
+    <span class="p">.</span><span class="n">subscribe</span> <span class="p">{</span> <span class="n">println</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+
+<span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="s">&#34;Testing Mono&#34;</span><span class="p">)</span>
+    <span class="p">.</span><span class="n">subscribe</span> <span class="p">{</span> <span class="n">println</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+
+<span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">2</span><span class="p">,</span><span class="m">3</span><span class="p">))</span>
+    <span class="p">.</span><span class="n">subscribe</span> <span class="p">{</span> <span class="n">println</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+</code></pre></div><p>Which then gives us an output that looks like this:</p>
+<div class="highlight"><pre class="chroma"><code class="language-text" data-lang="text">42
+Testing Mono
+[1, 2, 3]
+</code></pre></div><p>There&rsquo;s one more thing that might not be that obvious from the examples above and can really cause big issues in the production if not handled properly - any code that is passed to <code>just</code> method will execute immediately. Let&rsquo;s imagine a scenario where we are using a blocking library in our reactive code (even if it&rsquo;s not the best idea to do that, but more on that in some other post):</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">oldLibraryBlockingCall</span><span class="p">():</span> <span class="n">String</span> <span class="p">{</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="m">1000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&#34;Old library string&#34;</span>
+<span class="p">}</span>
+</code></pre></div><p>The code above simulates some work by sleeping for a second and then it returns a result. With current current knowledge, you might be tempted to write something like <code>Mono.just(oldLibraryBlockingCall())</code> and subscribe to that at some point, but this is not a good idea. To see what&rsquo;s actually happening, we can simply put that line in the main method without subscribing to it and add some logging to a method definition:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="n">oldLibraryBlockingCall</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">oldLibraryBlockingCall</span><span class="p">():</span> <span class="n">String</span> <span class="p">{</span>
+    <span class="n">println</span><span class="p">(</span><span class="s">&#34;Calling blocking method&#34;</span><span class="p">)</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="m">1000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&#34;Old library string&#34;</span>
+<span class="p">}</span>
+</code></pre></div><p>If we execute the given code, we can see that the logging statement is printed out which is not what we want because there are no subscribers yet. To prevent this from happening, usually, we use <code>fromSupplier</code> factory method which, as the name suggests, accepts a <code>Supplier&lt;T&gt;</code> implementation whose implementation will call our old library method and that call will actually happen only if someone subscribes to that <code>Mono&lt;T&gt;</code>.</p>
+<p>So, if we update our main method:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">Mono</span><span class="p">.</span><span class="n">fromSupplier</span> <span class="p">{</span> <span class="n">oldLibraryBlockingCall</span><span class="p">()</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><p>we will see that nothing is printed out, but if we subscribe to it, log statements will be printed as well as the string that method returns:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">Mono</span><span class="p">.</span><span class="n">fromSupplier</span> <span class="p">{</span> <span class="n">oldLibraryBlockingCall</span><span class="p">()</span> <span class="p">}</span>
+        <span class="p">.</span><span class="n">subscribe</span> <span class="p">{</span> <span class="n">println</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div><h2 id="defer">Defer</h2>
+<p>There&rsquo;s one nice little factory method called <code>defer</code> which does the same thing as <code>fromSupplier</code> (it defers execution until subscription), but it&rsquo;s used when the return type is also <code>Mono&lt;T&gt;</code>. So, if we change <code>oldLibraryBlockingCall()</code> so that it returns a <code>Mono&lt;String&gt;</code> then we&rsquo;d have to use <code>Mono.defer { oldLibraryBlockingCall() }</code> to get the same result.</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">Mono</span><span class="p">.</span><span class="n">defer</span> <span class="p">{</span> <span class="n">oldLibraryBlockingCall</span><span class="p">()</span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">fun</span> <span class="nf">oldLibraryBlockingCall</span><span class="p">():</span> <span class="n">Mono</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;</span> <span class="p">{</span>
+    <span class="n">println</span><span class="p">(</span><span class="s">&#34;Calling blocking method&#34;</span><span class="p">)</span>
+    <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="m">1000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="s">&#34;Old library string&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><h2 id="create">Create</h2>
+<p><code>create</code> method gives us full control on <code>Mono&lt;T&gt;</code> creation and provides a methods to manually push data to it. This is especially useful if we have asynchronus API that you want to use in the reactive code. Let&rsquo;s image there&rsquo;s an asynchronous method that accepts a callback:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">executeRequest</span><span class="p">(</span><span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">Random</span><span class="p">.</span><span class="n">nextBoolean</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">callback</span><span class="p">.</span><span class="n">success</span><span class="p">(</span><span class="s">&#34;Async success&#34;</span><span class="p">)</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">callback</span><span class="p">.</span><span class="n">error</span><span class="p">(</span><span class="n">Throwable</span><span class="p">(</span><span class="s">&#34;Async error&#34;</span><span class="p">))</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">interface</span> <span class="nc">Callback</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span>
+    <span class="k">fun</span> <span class="nf">success</span><span class="p">():</span> <span class="n">T</span>
+    <span class="k">fun</span> <span class="nf">error</span><span class="p">():</span> <span class="n">Throwable</span>
+<span class="p">}</span>
+</code></pre></div><p>We can then wrap call to <code>executeRequest</code> method with a <code>create</code> factory method. This will give us <code>MonoSink&lt;T&gt;</code> object which has methods <code>success</code> and <code>error</code> that we can call inside callback:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">val</span> <span class="py">mono</span> <span class="p">=</span> <span class="n">Mono</span><span class="p">.</span><span class="n">create</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">sink</span> <span class="p">-&gt;</span>
+    <span class="n">executeRequest</span><span class="p">(</span><span class="k">object</span> <span class="err">: </span><span class="nc">Callback</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;</span> <span class="p">{</span>
+        <span class="k">override</span> <span class="k">fun</span> <span class="nf">success</span><span class="p">(</span><span class="k">data</span><span class="p">:</span> <span class="n">String</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">sink</span><span class="p">.</span><span class="n">success</span><span class="p">(</span><span class="k">data</span><span class="p">)</span>
+        <span class="p">}</span>
+ 
+        <span class="k">override</span> <span class="k">fun</span> <span class="nf">error</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Throwable</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">sink</span><span class="p">.</span><span class="n">error</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+<span class="n">mono</span><span class="p">.</span><span class="n">subscribe</span> <span class="p">{</span> <span class="n">println</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+</code></pre></div><p>Calling <code>success</code> on <code>MonoSink&lt;T&gt;</code> will actually trigger <code>onNext</code> and <code>onComplete</code> callbacks which will terminate a stream.</p>
+<h2 id="subscriber">Subscriber</h2>
+<p>In the beginning, we saw a simple subscriber that just prints whatever stream produces - it can be either a result or an error. The problem with this is that Specification provides a lot more <a href="https://mister11.github.io/hello_reactive_streams/#subscriber">information</a> that can help us so let&rsquo;s dive into that. The simplest implementation of a <code>Subsriber&lt;T&gt;</code> that just prints out every event with provided data would look something like this:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">val</span> <span class="py">mono</span> <span class="p">=</span> <span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="m">10</span><span class="p">)</span>
+<span class="n">mono</span><span class="p">.</span><span class="n">subscribe</span><span class="p">(</span><span class="k">object</span> <span class="err">: </span><span class="nc">Subscriber</span><span class="p">&lt;</span><span class="n">Int</span><span class="p">&gt;</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onComplete</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onComplete&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onSubscribe</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Subscription</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onSubscribe&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onNext</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Int</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onNext $t&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onError</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Throwable</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onError $t&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">})</span>
+</code></pre></div><p>But, if we run this, we should see only <code>onSubscribe</code> log and we know <code>Mono&lt;T&gt;</code> should either succeed (<code>onNext</code> called once followed by <code>onComplete</code>) or error (only <code>onError</code> called once). Why? To answer this, we have to check out <a href="https://mister11.github.io/hello_reactive_streams/#subscription"><code>Subscription</code></a> interface defined in the Specification - it has a method to request data. This means we have to save a reference to the <code>Subscription</code> in the <code>onSubscribe</code> method and call <code>request</code> method on it:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">var</span> <span class="py">subscription</span><span class="p">:</span> <span class="n">Subscription</span><span class="p">?</span> <span class="p">=</span> <span class="k">null</span>
+<span class="k">val</span> <span class="py">mono</span> <span class="p">=</span> <span class="n">Mono</span><span class="p">.</span><span class="n">just</span><span class="p">(</span><span class="m">10</span><span class="p">)</span>
+<span class="n">mono</span><span class="p">.</span><span class="n">subscribe</span><span class="p">(</span><span class="k">object</span> <span class="err">: </span><span class="nc">Subscriber</span><span class="p">&lt;</span><span class="n">Int</span><span class="p">&gt;</span> <span class="p">{</span>
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onComplete</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onComplete&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onSubscribe</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Subscription</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="n">subscription</span> <span class="p">=</span> <span class="n">s</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onSubscribe&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onNext</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Int</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onNext $t&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+
+    <span class="k">override</span> <span class="k">fun</span> <span class="nf">onError</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Throwable</span><span class="p">?)</span> <span class="p">{</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&#34;onError $t&#34;</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">})</span>
+<span class="n">subscription</span><span class="o">?.</span><span class="n">request</span><span class="p">(</span><span class="m">1</span><span class="p">)</span>
+</code></pre></div><p>This now prints number 10 followed by logging that shows us stream completed successfully. Luckily, this whole process is hidden from us in Spring application so we never have to do that, but it&rsquo;s always good to know what&rsquo;s happening behind the scenes.</p>
+<h1 id="flux">Flux</h1>
+<p><a href="https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html"><code>Flux&lt;T&gt;</code></a> is another implementation of a <code>Publisher&lt;T&gt;</code> interface provided by the Project Reactor team that can produce 0 to N items. Here&rsquo;s its marble diagram.</p>
+<figure>
+    <img src="/project_reactor_intro/flux_marble.png"
+         alt="Flux marble diagram"/> 
+</figure>
+
+<p><code>Flux&lt;T&gt;</code> is usually used when we need to process one stream item at the time or when we have an infinite stream in which case we also might need backpressure support that&rsquo;s built-in it.</p>
+<p>In my experience, <code>Flux&lt;T&gt;</code> is not used as often as <code>Mono&lt;T&gt;</code>, but I guess that can vary due to different application needs. Also, almost everything mentioned for <code>Mono&lt;T&gt;</code> can be applied to <code>Flux&lt;T&gt;</code> with an exception being the creation of it using <code>create</code> factory method.</p>
+<h2 id="create-1">Create</h2>
+<p>To see how creation of a <code>Flux&lt;T&gt;</code> is different, we can use slightly adjusted version of a callback example:</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">fun</span> <span class="nf">executeRequest</span><span class="p">(</span><span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">&lt;</span><span class="n">List</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;&gt;)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">Random</span><span class="p">.</span><span class="n">nextBoolean</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">callback</span><span class="p">.</span><span class="n">success</span><span class="p">(</span><span class="n">listOf</span><span class="p">(</span><span class="s">&#34;Async success 1&#34;</span><span class="p">,</span> <span class="s">&#34;Async success 2&#34;</span><span class="p">,</span> <span class="s">&#34;Async success 3&#34;</span><span class="p">))</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">callback</span><span class="p">.</span><span class="n">error</span><span class="p">(</span><span class="n">Throwable</span><span class="p">(</span><span class="s">&#34;Async error&#34;</span><span class="p">))</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">interface</span> <span class="nc">Callback</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">{</span>
+    <span class="k">fun</span> <span class="nf">success</span><span class="p">(</span><span class="k">data</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span>
+    <span class="k">fun</span> <span class="nf">error</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Throwable</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div><p>In this case, the success callback method returns a list of items and we want to return those items as a stream of 3 items.</p>
+<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">val</span> <span class="py">flux</span> <span class="p">=</span> <span class="n">Flux</span><span class="p">.</span><span class="n">create</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">sink</span> <span class="p">-&gt;</span>
+    <span class="n">executeRequest</span><span class="p">(</span><span class="k">object</span> <span class="err">: </span><span class="nc">Callback</span><span class="p">&lt;</span><span class="n">List</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;&gt;</span> <span class="p">{</span>
+        <span class="k">override</span> <span class="k">fun</span> <span class="nf">success</span><span class="p">(</span><span class="k">data</span><span class="p">:</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">String</span><span class="p">&gt;)</span> <span class="p">{</span>
+            <span class="k">data</span><span class="p">.</span><span class="n">forEach</span> <span class="p">{</span> <span class="n">item</span> <span class="p">-&gt;</span>
+                <span class="n">sink</span><span class="p">.</span><span class="n">next</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="n">sink</span><span class="p">.</span><span class="n">complete</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="k">override</span> <span class="k">fun</span> <span class="nf">error</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Throwable</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">sink</span><span class="p">.</span><span class="n">error</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+
+<span class="n">flux</span><span class="p">.</span><span class="n">subscribe</span> <span class="p">{</span> <span class="n">println</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="p">}</span>
+</code></pre></div><p>As we can see, the only difference is that for each item we have to call <code>next</code> and, at the end of the processing, call <code>complete</code>. If you check out what we did for <code>Mono&lt;T&gt;</code>, there&rsquo;s only one call of <code>success</code> method which will trigger <code>onNext</code> callback only once and terminate a stream by calling <code>onComplete</code> callback. <code>Flux&lt;T&gt;</code> will trigger exactly those callbacks, but <code>onNext</code> will be called multiple times. In case of an error, the stream will terminate with <code>onError</code> callback which is exactly the same as <code>Mono&lt;T&gt;</code>.</p>
+<h2 id="backpressure">Backpressure</h2>
+<p>When dealing with streams of data that contain more than one item, you might need to deal with backpressure. We&rsquo;ve seen what backpressure is in the previous post, but since this is one of the most important things to consider, it&rsquo;s worth repeating it. Backpressure is a mechanism that can slow down a producer so that consumers can keep up with it. We can imagine a case where everything a consumer does is reading from a database while the consumer has to do some complex business logic and send data over the network. For such cases, <code>Flux&lt;T&gt;</code> has <code>onBackpressure*</code> methods which you can use to control its behavior in such cases.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this post, we&rsquo;ve seen basics of Project Reactor&rsquo;s building blocks, but there&rsquo;s much more to it. Because its usage is (for the most part) coupled with Spring Framework, we will dive into that and see how you can use <code>Mono&lt;T&gt;</code> or <code>Flux&lt;T&gt;</code> as request and response types in the Spring Boot application. Additionally, we will see what are the potential issues with using blocking calls in your backend service and how to avoid those issues.</p>
+]]></content>
+		</item>
+		
+		<item>
+			<title>Hello, Reactive Streams!</title>
+			<link>https://mister11.github.io/posts/hello_reactive_streams/</link>
+			<pubDate>Tue, 05 May 2020 00:00:00 +0000</pubDate>
+			
+			<guid>https://mister11.github.io/posts/hello_reactive_streams/</guid>
+			<description>In recent years, it seems like reactive programming has found its place in the world of software development. This is especially obvious when you look at both mobile platforms (Android and iOS) as well as JavaScript and libraries like RxJava, RxSwift, and RxJS. Handling user interactions with a UI, making API calls in parallel and maybe even sending events to an analytics server while keeping your app from stuttering in an environment that has limited resources is not an easy job.</description>
+			<content type="html"><![CDATA[<p>In recent years, it seems like reactive programming has found its place in the world of software development. This is especially obvious when you look at both mobile platforms (Android and iOS) as well as JavaScript and libraries like <a href="https://github.com/ReactiveX/RxJava">RxJava</a>, <a href="https://github.com/ReactiveX/RxSwift">RxSwift</a>, and <a href="https://github.com/ReactiveX/rxjs">RxJS</a>. Handling user interactions with a UI, making API calls in parallel and maybe even sending events to an analytics server while keeping your app from stuttering in an environment that has limited resources is not an easy job. Also, it&rsquo;s not like you can just add another phone or browser to make your app run faster. This might be one of the reasons why reactive programming didn&rsquo;t make significant progress in the world of backend development - it&rsquo;s easy to just add another server instance that will run your app and leave load balancer to work things out.</p>
+<p>But it seems like people realized that they might save a few bucks from running another server instance just by changing the way they write code. There seems to be more interest in reactive programming in recent years and there&rsquo;s a lot of development focused towards support for reactive programming in different technologies and programming languages.</p>
+<p>As this series of articles is Spring Boot oriented, our focus will be solely on <a href="https://projectreactor.io/">Project Reactor</a> since Spring Boot ships with it, but most of the principles explained in this article can be applied to any other implementation of the Reactive Streams specification.</p>
+<h1 id="reactive-streams-specification">Reactive Streams specification</h1>
+<p>Reactive Streams <a href="https://www.reactive-streams.org/">page</a> sums the intention of the specification nicely by saying:</p>
+<blockquote>
+<p>Reactive Streams is an initiative to provide a standard for asynchronous stream processing with non-blocking backpressure.</p>
+</blockquote>
+<p>We will come to the term backpressure later, but for now, it&rsquo;s important to understand that we are talking about an asynchronous/non-blocking stream processing (usually some type of transformation that involves business logic). Also, it&rsquo;s important to notice that Specification does not provide any details on how to achieve non-blocking processing or backpressure - this is an implementation detail and it&rsquo;s on Specification implementer to decide.</p>
+<p>For now, we will look at the 4 Java interfaces that are part of the specification.</p>
+<h2 id="publisher">Publisher</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Publisher</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">subscribe</span><span class="o">(</span><span class="n">Subscriber</span><span class="o">&lt;?</span> <span class="kd">super</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">s</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div><p><code>Publisher&lt;T&gt;</code> is one of the two main &ldquo;parties&rdquo; involved in data exchange. As its name suggests, <code>Publisher&lt;T&gt;</code> is an interface defining a producer of data and, by being parameterized with a generic type, it can produce anything (strings, numbers, custom types, etc.). Each <code>Publisher&lt;T&gt;</code> enables us to subscribe to its stream of data (have in mind that stream can be anything from 0 to an infinite number of elements) by providing a consumer - <code>Subscriber&lt;T&gt;</code>.</p>
+<h2 id="subscriber">Subscriber</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Subscriber</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onSubscribe</span><span class="o">(</span><span class="n">Subscription</span> <span class="n">s</span><span class="o">);</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNext</span><span class="o">(</span><span class="n">T</span> <span class="n">t</span><span class="o">);</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onError</span><span class="o">(</span><span class="n">Throwable</span> <span class="n">t</span><span class="o">);</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onComplete</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div><p><code>Subscriber&lt;T&gt;</code> is a second main &ldquo;party&rdquo; that sits on the consumer side of a stream. It has a method for a subscription action that will notify <code>Publisher&lt;T&gt;</code> it can start sending data along with 3 other methods that will be triggered as a stream is being processed. <code>onNext</code> will be called every time there&rsquo;s a new item in the stream ready for a consumer to process while <code>onError</code> or <code>onComplete</code> will be called when there&rsquo;s an error in the stream processing or when there are no more items in the stream. The important thing here is that once <code>onError</code> or <code>onComplete</code> are called, there will be no more <code>onNext</code> calls. We can say that <code>onError</code> and <code>onComplete</code> are terminating operations on a stream.</p>
+<h2 id="subscription">Subscription</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Subscription</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">request</span><span class="o">(</span><span class="kt">long</span> <span class="n">n</span><span class="o">);</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cancel</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div><p><code>Subscription</code> interface links <code>Publisher&lt;T&gt;</code> with a <code>Subscriber&lt;T&gt;</code>. It enables <code>Subscriber&lt;T&gt;</code> to request more data from the <code>Publisher&lt;T&gt;</code> or to cancel the stream. Requesting more data enables backpressure. Backpressure is an ability to slow down a producer if a consumer is too slow. So, imagine <code>Subscriber&lt;T&gt;</code> being able to consume 100 items per second and <code>Publisher&lt;T&gt;</code> being able to produce 10000 items per second. Without backpressure support, <code>Subscriber&lt;T&gt;</code> would be overwhelmed relatively quickly, but with it, <code>Subscriber&lt;T&gt;</code> can request an exact amount of data it can consume and keep running normally. Of course, extra data that cannot be processed has to be handled in some way and that can be customizable depending on the application needs.</p>
+<h2 id="processor">Processor</h2>
+<div class="highlight"><pre class="chroma"><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Processor</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">R</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">Subscriber</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">Publisher</span><span class="o">&lt;</span><span class="n">R</span><span class="o">&gt;</span> <span class="o">{</span>
+<span class="o">}</span>
+</code></pre></div><p>In the end, there&rsquo;s a <code>Processor&lt;T, R&gt;</code> that it both <code>Subscriber&lt;T&gt;</code> and <code>Publisher&lt;T&gt;</code> and it is used when you need a bridge between non-reactive and reactive API. Notice that interface does not define any new methods - it just contains inherited methods. In the upcoming post, we will see an example of the <code>Processor&lt;T&gt;</code> usage so stay tuned!</p>
+<h1 id="project-reactor">Project Reactor</h1>
+<p><a href="https://projectreactor.io/">Project Reactor</a> provides one of the many available Reactive Streams specification implementations and it comes bundled with the Spring WebFlux starter dependency. Two projects that are bundled in it are Reactor Core and Reactor Test that gives you basic support for writing and testing your reactive
+applications. Also, there&rsquo;s a Reactor Netty project that provides reactive client/server capabilities over <a href="https://netty.io/">Netty</a>.</p>
+<p>Reactor Core&rsquo;s <a href="https://projectreactor.io/docs/core/release/reference/">awesome documentation</a> does an amazing job explaining issues of both blocking and asynchronous programming and gradually builds up a case for using a reactive style. After that, it introduces the main types that implement Reactive Streams specification: <code>Mono&lt;T&gt;</code>, <code>Flux&lt;T&gt;</code> and 4 types of <code>Processor&lt;T&gt;</code>. There&rsquo;s also a section on testing, as well as a few sections on some more advanced topics that we will go through in upcoming posts.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>Reactive programming is slowly finding its place in backend development. In modern, microservice/event-driven architecture where the system needs to handle a lot of requests, having the ability to process everything in a non-blocking fashion can have huge benefits on the system performance. In the next article, we will explore basic building blocks of Project Reactor and later we will see how can we leverage those building blocks in the Spring application and what are the benefits when compared to a blocking implementation.</p>
+]]></content>
+		</item>
+		
+	</channel>
+</rss>
