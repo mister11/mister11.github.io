@@ -5,13 +5,13 @@
 		<description>Recent content in Posts on Random Developer&#39;s Blog</description>
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
-		<lastBuildDate>Tue, 09 Jun 2020 00:00:00 +0000</lastBuildDate>
+		<lastBuildDate>Thu, 18 Jun 2020 00:00:00 +0000</lastBuildDate>
 		<atom:link href="https://mister11.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
 		
 		<item>
-			<title>Spring WebFlux</title>
+			<title>Spring WebFlux Introduction</title>
 			<link>https://mister11.github.io/posts/spring_webflux/</link>
-			<pubDate>Tue, 09 Jun 2020 00:00:00 +0000</pubDate>
+			<pubDate>Thu, 18 Jun 2020 00:00:00 +0000</pubDate>
 			
 			<guid>https://mister11.github.io/posts/spring_webflux/</guid>
 			<description>In the second post, we&amp;rsquo;ve talked about the basics of Project Reactor and now it&amp;rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&amp;rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application.</description>
