@@ -1,413 +1,240 @@
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=theme-color content="#494f5c"><meta name=msapplication-TileColor content="#494f5c"><meta itemprop=name content="Spring WebFlux Introduction"><meta itemprop=description content="In the second post, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application."><meta itemprop=datePublished content="2020-06-18T00:00:00+00:00"><meta itemprop=dateModified content="2020-06-18T00:00:00+00:00"><meta itemprop=wordCount content="3258"><meta itemprop=keywords content><meta property="og:title" content="Spring WebFlux Introduction"><meta property="og:description" content="In the second post, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application."><meta property="og:type" content="article"><meta property="og:url" content="https://mister11.github.io/posts/spring_webflux/"><meta property="article:published_time" content="2020-06-18T00:00:00+00:00"><meta property="article:modified_time" content="2020-06-18T00:00:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Spring WebFlux Introduction"><meta name=twitter:description content="In the second post, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application."><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=manifest href=/site.webmanifest><link rel=mask-icon href=/safari-pinned-tab.svg color><link rel="shortcut icon" href=/favicon.ico><title>Spring WebFlux Introduction</title><link rel=stylesheet href=https://mister11.github.io/css/style.min.657bcb7af31123e4156b1a3d2ff60a636717e54ead74f882136b5114cf72b55e.css integrity="sha256-ZXvLevMRI+QVaxo9L/YKY2cX5U6tdPiCE2tRFM9ytV4=" crossorigin=anonymous></head><body id=page><header id=site-header class="animated slideInUp faster"><div class="hdr-wrapper section-inner"><div class=hdr-left><div class=site-branding><a href=https://mister11.github.io/>Random Developer's Blog</a></div><nav class="site-nav hide-in-mobile"><a href=https://mister11.github.io/posts/>Posts</a>
+<a href=https://mister11.github.io/about/>About</a></nav></div><div class="hdr-right hdr-icons"><span class="hdr-social hide-in-mobile"><a href=https://github.com/mister11 target=_blank rel="noopener me" title=Github><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77a5.44 5.44.0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a><a href=https://twitter.com/mist3er11 target=_blank rel="noopener me" title=Twitter><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg></a><a href=https://www.linkedin.com/in/mister11/ target=_blank rel="noopener me" title=Linkedin><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a></span><button id=menu-btn class=hdr-btn title=Menu><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div></header><div id=mobile-menu class="animated fast"><ul><li><a href=https://mister11.github.io/posts/>Posts</a></li><li><a href=https://mister11.github.io/about/>About</a></li></ul></div><main class="site-main section-inner animated fadeIn faster"><article class=thin><header class=post-header><div class=post-meta><span>18 Jun 2020</span></div><h1>Spring WebFlux Introduction</h1></header><div class=content><p>In the <a href=https://mister11.github.io/posts/project_reactor_intro>second post</a>, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application.</p><h1 id=motivation>Motivation<a href=#motivation class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>Before Spring WebFlux came in version 5.0, the only option was the classic Spring Web MVC framework built on top of Servlet API. This framework is, to this day, the most popular choice for new Spring projects and it works like a charm, but reactive, non-blocking programming model is gaining traction in recent years. The idea behind it is to reduce time application spends in blocking state waiting for data to arrive (from a database, another service, message queue, etc.) which could make an application faster as shown <a href=https://medium.com/@the.raj.saxena/springboot-2-performance-servlet-stack-vs-webflux-reactive-stack-528ad5e9dadc>here</a> and <a href=https://medium.com/@filia.aleks/microservice-performance-battle-spring-mvc-vs-webflux-80d39fd81bf0>here</a>. So, next time you are creating a new Spring project, think about making it reactive or, if you have a chance, migrate an existing service.</p><p>Now, you might be wondering: &ldquo;Should I then migrate every service I have to this new reactive model?&rdquo; and, of course, the answer is no. Blindly migrating existing codebases to a new programming model takes time, opens the door for new bugs to creep in and it might even cause a decrease in performance if not done properly. If your service if idling most of the time or is not under the high load, simple, blocking model will work just fine. Also, existing blocking libraries (that are still prevalent) will work without any additional adjustments. However, if you have some part of the system that is under the high load and uses a lot of threading to make things faster, switching to a reactive model might be a good idea.</p><p>Luckily, switching to it from the blocking model is simple when using a Spring Boot framework thanks to the efforts of the Spring team. The following sections contain a step-by-step guide on how to do a migration. Each step will have a link to a corresponding project&rsquo;s branch <a href=https://github.com/mister11/webflux-demo/>on Github</a>.</p><h1 id=spring-web-mvc-application>Spring Web MVC application<a href=#spring-web-mvc-application class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>For start, let&rsquo;s go to <a href=https://start.spring.io/>https://start.spring.io/</a> and create a simple Spring application with only one dependency - <code>spring-boot-starter-web</code>. This will give us everything we need to create an endpoint that will, for the start, return a hardcoded list of programming languages. As a side-note, I&rsquo;ll be using Kotlin in my examples, but everything can be done in Java as well.</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=nd>@RequestMapping</span><span class=p>(</span><span class=s2>&#34;/languages&#34;</span><span class=p>)</span>
+<span class=nd>@RestController</span>
+<span class=k>class</span> <span class=nc>LanguagesController</span> <span class=p>{</span>
 
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<meta name="theme-color" content="#494f5c">
-	<meta name="msapplication-TileColor" content="#494f5c">
-<meta itemprop="name" content="Spring WebFlux Introduction">
-<meta itemprop="description" content="In the second post, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application.">
-<meta itemprop="datePublished" content="2020-06-18T00:00:00&#43;00:00" />
-<meta itemprop="dateModified" content="2020-06-18T00:00:00&#43;00:00" />
-<meta itemprop="wordCount" content="3284">
+    <span class=nd>@GetMapping</span>
+    <span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>List</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+        <span class=k>return</span> <span class=n>languages</span>
+    <span class=p>}</span>
+<span class=p>}</span>
 
+<span class=k>data</span> <span class=k>class</span> <span class=nc>Language</span><span class=p>(</span>
+    <span class=k>val</span> <span class=py>name</span><span class=p>:</span> <span class=n>String</span>
+<span class=p>)</span>
 
-
-<meta itemprop="keywords" content="" /><meta property="og:title" content="Spring WebFlux Introduction" />
-<meta property="og:description" content="In the second post, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application." />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://mister11.github.io/posts/spring_webflux/" />
-<meta property="article:published_time" content="2020-06-18T00:00:00+00:00" />
-<meta property="article:modified_time" content="2020-06-18T00:00:00+00:00" />
-<meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Spring WebFlux Introduction"/>
-<meta name="twitter:description" content="In the second post, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application."/>
-
-	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-	<link rel="manifest" href="/site.webmanifest">
-	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
-	<link rel="shortcut icon" href="/favicon.ico">
-
-	<title>Spring WebFlux Introduction</title>
-	<link rel="stylesheet" href="https://mister11.github.io/css/style.min.657bcb7af31123e4156b1a3d2ff60a636717e54ead74f882136b5114cf72b55e.css" integrity="sha256-ZXvLevMRI+QVaxo9L/YKY2cX5U6tdPiCE2tRFM9ytV4=" crossorigin="anonymous">
-	
-</head>
-
-<body id="page">
-	
-	<header id="site-header" class="animated slideInUp faster">
-		<div class="hdr-wrapper section-inner">
-			<div class="hdr-left">
-				<div class="site-branding">
-					<a href="https://mister11.github.io/">Random Developer&#39;s Blog</a>
-				</div>
-				<nav class="site-nav hide-in-mobile">
-					
-				<a href="https://mister11.github.io/posts/">Posts</a>
-				<a href="https://mister11.github.io/about/">About</a>
-
-				</nav>
-			</div>
-			<div class="hdr-right hdr-icons">
-				<span class="hdr-social hide-in-mobile"><a href="https://github.com/mister11" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a><a href="https://twitter.com/mist3er11" target="_blank" rel="noopener me" title="Twitter"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a><a href="https://www.linkedin.com/in/mister11/" target="_blank" rel="noopener me" title="Linkedin"><svg xmlns="http://www.w3.org/2000/svg" class="feather" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
-			</div>
-		</div>
-	</header>
-	<div id="mobile-menu" class="animated fast">
-		<ul>
-			<li><a href="https://mister11.github.io/posts/">Posts</a></li>
-			<li><a href="https://mister11.github.io/about/">About</a></li>
-		</ul>
-	</div>
-
-
-	<main class="site-main section-inner animated fadeIn faster">
-		<article class="thin">
-			<header class="post-header">
-				<div class="post-meta"><span>18 Jun 2020</span></div>
-				<h1>Spring WebFlux Introduction</h1>
-			</header>
-			<div class="content">
-				<p>In the <a href="https://mister11.github.io/posts/project_reactor_intro">second post</a>, we&rsquo;ve talked about the basics of Project Reactor and now it&rsquo;s the time to apply this in practice. Instead of creating a Spring WebFlux application, we&rsquo;ve will see how to migrate a small Spring MVC application to a Spring WebFlux one. This will help us see how seamless migration is, what are Spring Webflux counterparts to a well-known Spring MVC components, and, by the end of this blog post, we will have fully functional reactive application.</p>
-<h1 id="motivation">Motivation<a href="#motivation" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>Before Spring WebFlux came in version 5.0, the only option was the classic Spring Web MVC framework built on top of Servlet API. This framework is, to this day, the most popular choice for new Spring projects and it works like a charm, but reactive, non-blocking programming model is gaining traction in recent years. The idea behind it is to reduce time application spends in blocking state waiting for data to arrive (from a database, another service, message queue, etc.) which could make an application faster as shown <a href="https://medium.com/@the.raj.saxena/springboot-2-performance-servlet-stack-vs-webflux-reactive-stack-528ad5e9dadc">here</a> and <a href="https://medium.com/@filia.aleks/microservice-performance-battle-spring-mvc-vs-webflux-80d39fd81bf0">here</a>. So, next time you are creating a new Spring project, think about making it reactive or, if you have a chance, migrate an existing service.</p>
-<p>Now, you might be wondering: &ldquo;Should I then migrate every service I have to this new reactive model?&rdquo; and, of course, the answer is no. Blindly migrating existing codebases to a new programming model takes time, opens the door for new bugs to creep in and it might even cause a decrease in performance if not done properly. If your service if idling most of the time or is not under the high load, simple, blocking model will work just fine. Also, existing blocking libraries (that are still prevalent) will work without any additional adjustments. However, if you have some part of the system that is under the high load and uses a lot of threading to make things faster, switching to a reactive model might be a good idea.</p>
-<p>Luckily, switching to it from the blocking model is simple when using a Spring Boot framework thanks to the efforts of the Spring team. The following sections contain a step-by-step guide on how to do a migration. Each step will have a link to a corresponding project&rsquo;s branch <a href="https://github.com/mister11/webflux-demo/">on Github</a>.</p>
-<h1 id="spring-web-mvc-application">Spring Web MVC application<a href="#spring-web-mvc-application" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>For start, let&rsquo;s go to <a href="https://start.spring.io/">https://start.spring.io/</a> and create a simple Spring application with only one dependency - <code>spring-boot-starter-web</code>. This will give us everything we need to create an endpoint that will, for the start, return a hardcoded list of programming languages. As a side-note, I&rsquo;ll be using Kotlin in my examples, but everything can be done in Java as well.</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">@RequestMapping</span><span class="p">(</span><span class="s">&#34;/languages&#34;</span><span class="p">)</span>
-<span class="n">@RestController</span>
-<span class="k">class</span> <span class="nc">LanguagesController</span> <span class="p">{</span>
-
-    <span class="n">@GetMapping</span>
-    <span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">languages</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="k">data</span> <span class="k">class</span> <span class="nc">Language</span><span class="p">(</span>
-    <span class="k">val</span> <span class="py">name</span><span class="p">:</span> <span class="n">String</span>
-<span class="p">)</span>
-
-<span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">listOf</span><span class="p">(</span>
-    <span class="n">Language</span><span class="p">(</span><span class="s">&#34;Kotlin&#34;</span><span class="p">),</span>
-    <span class="n">Language</span><span class="p">(</span><span class="s">&#34;Java&#34;</span><span class="p">),</span>
-    <span class="n">Language</span><span class="p">(</span><span class="s">&#34;Go&#34;</span><span class="p">),</span>
-    <span class="n">Language</span><span class="p">(</span><span class="s">&#34;Python&#34;</span><span class="p">)</span>
-<span class="p">)</span>
-</code></pre></div><p>The next step is to move a hardcoded list of languages to a database and use some existing Spring primitives to fetch the list from there. If our case, we will use PostgreSQL database and <code>JdbcTemplate</code>, but you can use whatever database and (blocking) drivers you want. For this, we need 2 new dependencies, a few Spring properties and a running database (how to run a database and fill it with data is described in the project&rsquo;s <a href="https://github.com/mister11/webflux-demo/blob/master/README.md#database">README</a>):</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">implementation</span><span class="p">(</span><span class="s">&#34;org.springframework.boot:spring-boot-starter-data-jdbc&#34;</span><span class="p">)</span>
-<span class="n">runtimeOnly</span><span class="p">(</span><span class="s">&#34;org.postgresql:postgresql&#34;</span><span class="p">)</span>
+<span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>listOf</span><span class=p>(</span>
+    <span class=n>Language</span><span class=p>(</span><span class=s2>&#34;Kotlin&#34;</span><span class=p>),</span>
+    <span class=n>Language</span><span class=p>(</span><span class=s2>&#34;Java&#34;</span><span class=p>),</span>
+    <span class=n>Language</span><span class=p>(</span><span class=s2>&#34;Go&#34;</span><span class=p>),</span>
+    <span class=n>Language</span><span class=p>(</span><span class=s2>&#34;Python&#34;</span><span class=p>)</span>
+<span class=p>)</span>
+</code></pre></div><p>The next step is to move a hardcoded list of languages to a database and use some existing Spring primitives to fetch the list from there. If our case, we will use PostgreSQL database and <code>JdbcTemplate</code>, but you can use whatever database and (blocking) drivers you want. For this, we need 2 new dependencies, a few Spring properties and a running database (how to run a database and fill it with data is described in the project&rsquo;s <a href=https://github.com/mister11/webflux-demo/blob/master/README.md#database>README</a>):</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=n>implementation</span><span class=p>(</span><span class=s2>&#34;org.springframework.boot:spring-boot-starter-data-jdbc&#34;</span><span class=p>)</span>
+<span class=n>runtimeOnly</span><span class=p>(</span><span class=s2>&#34;org.postgresql:postgresql&#34;</span><span class=p>)</span>
 </code></pre></div><pre><code>spring.datasource.url=jdbc:postgresql://localhost:5432/webflux-demo-database
 spring.datasource.username=postgres
 spring.datasource.password=postgres
-</code></pre><p>After this update, code looks like this (hardcoded list of languages is gone):</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">@RequestMapping</span><span class="p">(</span><span class="s">&#34;/languages&#34;</span><span class="p">)</span>
-<span class="n">@RestController</span>
-<span class="k">class</span> <span class="nc">LanguagesController</span><span class="p">(</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">jdbcTemplate</span><span class="p">:</span> <span class="n">JdbcTemplate</span>
-<span class="p">)</span> <span class="p">{</span>
+</code></pre><p>After this update, code looks like this (hardcoded list of languages is gone):</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=nd>@RequestMapping</span><span class=p>(</span><span class=s2>&#34;/languages&#34;</span><span class=p>)</span>
+<span class=nd>@RestController</span>
+<span class=k>class</span> <span class=nc>LanguagesController</span><span class=p>(</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>jdbcTemplate</span><span class=p>:</span> <span class=n>JdbcTemplate</span>
+<span class=p>)</span> <span class=p>{</span>
 
-    <span class="n">@GetMapping</span>
-    <span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-            <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-        <span class="p">};</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+    <span class=nd>@GetMapping</span>
+    <span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>List</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+        <span class=k>return</span> <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+            <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+        <span class=p>};</span>
+    <span class=p>}</span>
+<span class=p>}</span>
 
-<span class="k">data</span> <span class="k">class</span> <span class="nc">Language</span><span class="p">(</span>
-    <span class="k">val</span> <span class="py">name</span><span class="p">:</span> <span class="n">String</span>
-<span class="p">)</span>
-</code></pre></div><p>The next step will be an introduction of an external service that will return a year when given language was published. For mocking an external service, we&rsquo;ll be using <a href="https://designer.mocky.io/">Mocky</a> and for calling it we&rsquo;ll be using old, faithful <code>RestTemplate</code>. Another side-note: routes that are shown below might be expired in which case, here&rsquo;s a response those endpoints should return:</p>
-<div class="highlight"><pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
-    <span class="nt">&#34;year&#34;</span><span class="p">:</span> <span class="mi">1945</span>
-<span class="p">}</span>
-</code></pre></div><p>With mocks in place, we can add them to our existing code and make use of them:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">val</span> <span class="py">urls</span> <span class="p">=</span> <span class="n">mapOf</span><span class="p">(</span>
-    <span class="s">&#34;Kotlin&#34;</span> <span class="n">to</span> <span class="s">&#34;https://run.mocky.io/v3/6654273e-456d-40ce-9209-c879c93a844d&#34;</span><span class="p">,</span>
-    <span class="s">&#34;Java&#34;</span> <span class="n">to</span> <span class="s">&#34;https://run.mocky.io/v3/f04c90fc-7529-4f0b-a9d7-90e92105d5bf&#34;</span><span class="p">,</span>
-    <span class="s">&#34;Go&#34;</span> <span class="n">to</span> <span class="s">&#34;https://run.mocky.io/v3/2eece29e-29d8-4d59-aa81-9d47886f2e17&#34;</span><span class="p">,</span>
-    <span class="s">&#34;Python&#34;</span> <span class="n">to</span> <span class="s">&#34;https://run.mocky.io/v3/72bbad6e-2127-4f8a-a9c1-2fdf15b0c18c&#34;</span>
-<span class="p">)</span>
+<span class=k>data</span> <span class=k>class</span> <span class=nc>Language</span><span class=p>(</span>
+    <span class=k>val</span> <span class=py>name</span><span class=p>:</span> <span class=n>String</span>
+<span class=p>)</span>
+</code></pre></div><p>The next step will be an introduction of an external service that will return a year when given language was published. For mocking an external service, we&rsquo;ll be using <a href=https://designer.mocky.io/>Mocky</a> and for calling it we&rsquo;ll be using old, faithful <code>RestTemplate</code>. Another side-note: routes that are shown below might be expired in which case, here&rsquo;s a response those endpoints should return:</p><div class=highlight><pre class=chroma><code class=language-json data-lang=json><span class=p>{</span>
+    <span class=nt>&#34;year&#34;</span><span class=p>:</span> <span class=mi>1945</span>
+<span class=p>}</span>
+</code></pre></div><p>With mocks in place, we can add them to our existing code and make use of them:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=k>val</span> <span class=py>urls</span> <span class=p>=</span> <span class=n>mapOf</span><span class=p>(</span>
+    <span class=s2>&#34;Kotlin&#34;</span> <span class=n>to</span> <span class=s2>&#34;https://run.mocky.io/v3/6654273e-456d-40ce-9209-c879c93a844d&#34;</span><span class=p>,</span>
+    <span class=s2>&#34;Java&#34;</span> <span class=n>to</span> <span class=s2>&#34;https://run.mocky.io/v3/f04c90fc-7529-4f0b-a9d7-90e92105d5bf&#34;</span><span class=p>,</span>
+    <span class=s2>&#34;Go&#34;</span> <span class=n>to</span> <span class=s2>&#34;https://run.mocky.io/v3/2eece29e-29d8-4d59-aa81-9d47886f2e17&#34;</span><span class=p>,</span>
+    <span class=s2>&#34;Python&#34;</span> <span class=n>to</span> <span class=s2>&#34;https://run.mocky.io/v3/72bbad6e-2127-4f8a-a9c1-2fdf15b0c18c&#34;</span>
+<span class=p>)</span>
 
-<span class="n">@RequestMapping</span><span class="p">(</span><span class="s">&#34;/languages&#34;</span><span class="p">)</span>
-<span class="n">@RestController</span>
-<span class="k">class</span> <span class="nc">LanguagesController</span><span class="p">(</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">jdbcTemplate</span><span class="p">:</span> <span class="n">JdbcTemplate</span><span class="p">,</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">restTemplate</span><span class="p">:</span> <span class="n">RestTemplate</span>
-<span class="p">)</span> <span class="p">{</span>
+<span class=nd>@RequestMapping</span><span class=p>(</span><span class=s2>&#34;/languages&#34;</span><span class=p>)</span>
+<span class=nd>@RestController</span>
+<span class=k>class</span> <span class=nc>LanguagesController</span><span class=p>(</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>jdbcTemplate</span><span class=p>:</span> <span class=n>JdbcTemplate</span><span class=p>,</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>restTemplate</span><span class=p>:</span> <span class=n>RestTemplate</span>
+<span class=p>)</span> <span class=p>{</span>
 
-    <span class="n">@GetMapping</span>
-    <span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-        <span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-            <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-        <span class="p">};</span>
+    <span class=nd>@GetMapping</span>
+    <span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>List</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+        <span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+            <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+        <span class=p>};</span>
 
-        <span class="k">return</span> <span class="n">languages</span><span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-            <span class="k">val</span> <span class="py">languageYear</span> <span class="p">=</span> <span class="n">restTemplate</span><span class="p">.</span><span class="n">getForEntity</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">(),</span> <span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
-            <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="p">.</span><span class="n">body</span><span class="o">?.</span><span class="n">year</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+        <span class=k>return</span> <span class=n>languages</span><span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+            <span class=k>val</span> <span class=py>languageYear</span> <span class=p>=</span> <span class=n>restTemplate</span><span class=p>.</span><span class=n>getForEntity</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>(),</span> <span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
+            <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=p>.</span><span class=n>body</span><span class=o>?.</span><span class=n>year</span><span class=p>)</span>
+        <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
 
-<span class="k">data</span> <span class="k">class</span> <span class="nc">Language</span><span class="p">(</span>
-    <span class="k">val</span> <span class="py">name</span><span class="p">:</span> <span class="n">String</span><span class="p">,</span>
-    <span class="k">val</span> <span class="py">year</span><span class="p">:</span> <span class="n">Int</span><span class="p">?</span> <span class="p">=</span> <span class="k">null</span>
-<span class="p">)</span>
+<span class=k>data</span> <span class=k>class</span> <span class=nc>Language</span><span class=p>(</span>
+    <span class=k>val</span> <span class=py>name</span><span class=p>:</span> <span class=n>String</span><span class=p>,</span>
+    <span class=k>val</span> <span class=py>year</span><span class=p>:</span> <span class=n>Int</span><span class=p>?</span> <span class=p>=</span> <span class=k>null</span>
+<span class=p>)</span>
 
-<span class="k">data</span> <span class="k">class</span> <span class="nc">LanguageYear</span><span class="p">(</span>
-    <span class="k">val</span> <span class="py">year</span><span class="p">:</span> <span class="n">Int</span>
-<span class="p">)</span>
+<span class=k>data</span> <span class=k>class</span> <span class=nc>LanguageYear</span><span class=p>(</span>
+    <span class=k>val</span> <span class=py>year</span><span class=p>:</span> <span class=n>Int</span>
+<span class=p>)</span>
 
 
-<span class="n">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span> <span class="p">=</span> <span class="k">false</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">RestTemplateConfiguration</span> <span class="p">{</span>
+<span class=nd>@Configuration</span><span class=p>(</span><span class=n>proxyBeanMethods</span> <span class=p>=</span> <span class=k>false</span><span class=p>)</span>
+<span class=k>class</span> <span class=nc>RestTemplateConfiguration</span> <span class=p>{</span>
 
-    <span class="n">@Bean</span>
-    <span class="k">fun</span> <span class="nf">restTemplate</span><span class="p">(</span><span class="n">restTemplateBuilder</span><span class="p">:</span> <span class="n">RestTemplateBuilder</span><span class="p">):</span> <span class="n">RestTemplate</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">restTemplateBuilder</span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><p>At this point, we have everything we need to show how to migrate this blocking Spring application to a reactive, non-blocking stack.</p>
-<p>Code for this step is available <a href="https://github.com/mister11/webflux-demo">here</a>.</p>
-<h1 id="endpoint-migration">Endpoint migration<a href="#endpoint-migration" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>The simplest thing you can do to start the migration is to change the return type of the endpoint to a reactive primitive. Before that, we need to add Spring WebFlux dependency that will bring Project Reactor library to our project:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">implementation</span><span class="p">(</span><span class="s">&#34;org.springframework.boot:spring-boot-starter-webflux&#34;</span><span class="p">)</span>
-</code></pre></div><p>In our case, we are returning a <code>List&lt;Language&gt;</code> so we need to change that to a <code>Flux&lt;Language&gt;</code> and use one of the factory methods to create a <code>Flux</code> from a <code>List</code>.</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">@GetMapping</span>
-<span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">Flux</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-    <span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-        <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-    <span class="p">};</span>
+    <span class=nd>@Bean</span>
+    <span class=k>fun</span> <span class=nf>restTemplate</span><span class=p>(</span><span class=n>restTemplateBuilder</span><span class=p>:</span> <span class=n>RestTemplateBuilder</span><span class=p>):</span> <span class=n>RestTemplate</span> <span class=p>{</span>
+        <span class=k>return</span> <span class=n>restTemplateBuilder</span><span class=p>.</span><span class=n>build</span><span class=p>()</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></div><p>At this point, we have everything we need to show how to migrate this blocking Spring application to a reactive, non-blocking stack.</p><p>Code for this step is available <a href=https://github.com/mister11/webflux-demo>here</a>.</p><h1 id=endpoint-migration>Endpoint migration<a href=#endpoint-migration class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>The simplest thing you can do to start the migration is to change the return type of the endpoint to a reactive primitive. Before that, we need to add Spring WebFlux dependency that will bring Project Reactor library to our project:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=n>implementation</span><span class=p>(</span><span class=s2>&#34;org.springframework.boot:spring-boot-starter-webflux&#34;</span><span class=p>)</span>
+</code></pre></div><p>In our case, we are returning a <code>List&lt;Language></code> so we need to change that to a <code>Flux&lt;Language></code> and use one of the factory methods to create a <code>Flux</code> from a <code>List</code>.</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=nd>@GetMapping</span>
+<span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>Flux</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+    <span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+        <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+    <span class=p>};</span>
 
-    <span class="k">return</span> <span class="n">Flux</span><span class="p">.</span><span class="n">fromIterable</span><span class="p">(</span>
-        <span class="n">languages</span><span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-            <span class="k">val</span> <span class="py">languageYear</span> <span class="p">=</span> <span class="n">restTemplate</span><span class="p">.</span><span class="n">getForEntity</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">(),</span> <span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
-            <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="p">.</span><span class="n">body</span><span class="o">?.</span><span class="n">year</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-<span class="p">}</span>
-</code></pre></div><p>The problem with this is that it won&rsquo;t help at all with the application&rsquo;s performance - we still have blocking calls to both database and an external service. Still, it&rsquo;s nice to be able to introduce reactive primitives as return types at the top level and still have a fully functioning application. Also, you can use rich operators API that Project Reactor offers instead of a pretty poor streaming API that Java offers.</p>
-<p>One important thing to notice here is that we don&rsquo;t have to call <code>subscribe</code> at any point - Spring does that for us. This will be true in most cases - as long as every piece of execution bubbles up to the controller layer, Spring will automatically subscribe to our chain. Probably the most common example where subscription needs to be done manually are message queues - when the message comes, we need to perform some action that is not in any way connected with our interface layer.</p>
-<p>Also, if we check out logging when the application starts, we can see application still running on the Tomcat server while a fully reactive application will run, by default, on Netty. For now, this is not that relevant, but it will be when we complete migration.</p>
-<p>Code for this step is available <a href="https://github.com/mister11/webflux-demo/tree/step1_endpoint_migration">here</a>.</p>
-<h1 id="resttemplate-migration">RestTemplate migration<a href="#resttemplate-migration" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>Migrating calls to external service(s) is probably the best way to start the migration to a reactive stack. Those calls are usually the ones that take longer than anything else and it makes sense to make use of a non-blocking execution for it. At this stage, we will revert change from the previous section and pretend it never happened. In the section after this, we will combine the two.</p>
-<p>To do this, we will remove <code>RestTemplate</code> and replace it with its reactive counterpart - <code>WebClient</code>.</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">@RequestMapping</span><span class="p">(</span><span class="s">&#34;/languages&#34;</span><span class="p">)</span>
-<span class="n">@RestController</span>
-<span class="k">class</span> <span class="nc">LanguagesController</span><span class="p">(</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">jdbcTemplate</span><span class="p">:</span> <span class="n">JdbcTemplate</span><span class="p">,</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">webClient</span><span class="p">:</span> <span class="n">WebClient</span>
-<span class="p">)</span> <span class="p">{</span>
+    <span class=k>return</span> <span class=n>Flux</span><span class=p>.</span><span class=n>fromIterable</span><span class=p>(</span>
+        <span class=n>languages</span><span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+            <span class=k>val</span> <span class=py>languageYear</span> <span class=p>=</span> <span class=n>restTemplate</span><span class=p>.</span><span class=n>getForEntity</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>(),</span> <span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
+            <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=p>.</span><span class=n>body</span><span class=o>?.</span><span class=n>year</span><span class=p>)</span>
+        <span class=p>}</span>
+    <span class=p>)</span>
+<span class=p>}</span>
+</code></pre></div><p>The problem with this is that it won&rsquo;t help at all with the application&rsquo;s performance - we still have blocking calls to both database and an external service. Still, it&rsquo;s nice to be able to introduce reactive primitives as return types at the top level and still have a fully functioning application. Also, you can use rich operators API that Project Reactor offers instead of a pretty poor streaming API that Java offers.</p><p>One important thing to notice here is that we don&rsquo;t have to call <code>subscribe</code> at any point - Spring does that for us. This will be true in most cases - as long as every piece of execution bubbles up to the controller layer, Spring will automatically subscribe to our chain. Probably the most common example where subscription needs to be done manually are message queues - when the message comes, we need to perform some action that is not in any way connected with our interface layer.</p><p>Also, if we check out logging when the application starts, we can see application still running on the Tomcat server while a fully reactive application will run, by default, on Netty. For now, this is not that relevant, but it will be when we complete migration.</p><p>Code for this step is available <a href=https://github.com/mister11/webflux-demo/tree/step1_endpoint_migration>here</a>.</p><h1 id=resttemplate-migration>RestTemplate migration<a href=#resttemplate-migration class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>Migrating calls to external service(s) is probably the best way to start the migration to a reactive stack. Those calls are usually the ones that take longer than anything else and it makes sense to make use of a non-blocking execution for it. At this stage, we will revert change from the previous section and pretend it never happened. In the section after this, we will combine the two.</p><p>To do this, we will remove <code>RestTemplate</code> and replace it with its reactive counterpart - <code>WebClient</code>.</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=nd>@RequestMapping</span><span class=p>(</span><span class=s2>&#34;/languages&#34;</span><span class=p>)</span>
+<span class=nd>@RestController</span>
+<span class=k>class</span> <span class=nc>LanguagesController</span><span class=p>(</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>jdbcTemplate</span><span class=p>:</span> <span class=n>JdbcTemplate</span><span class=p>,</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>webClient</span><span class=p>:</span> <span class=n>WebClient</span>
+<span class=p>)</span> <span class=p>{</span>
 
-    <span class="n">@GetMapping</span>
-    <span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-        <span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-            <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-        <span class="p">};</span>
+    <span class=nd>@GetMapping</span>
+    <span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>List</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+        <span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+            <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+        <span class=p>};</span>
 
-        <span class="k">return</span> <span class="n">languages</span><span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-            <span class="k">val</span> <span class="py">languageYear</span> <span class="p">=</span> <span class="n">webClient</span>
-                <span class="p">.</span><span class="k">get</span><span class="p">()</span>
-                <span class="p">.</span><span class="n">uri</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">())</span>
-                <span class="p">.</span><span class="n">retrieve</span><span class="p">()</span>
-                <span class="p">.</span><span class="n">bodyToMono</span><span class="p">(</span><span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
-                <span class="p">.</span><span class="n">block</span><span class="p">()</span>
-            <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="o">?.</span><span class="n">year</span><span class="p">)</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
+        <span class=k>return</span> <span class=n>languages</span><span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+            <span class=k>val</span> <span class=py>languageYear</span> <span class=p>=</span> <span class=n>webClient</span>
+                <span class=p>.</span><span class=k>get</span><span class=p>()</span>
+                <span class=p>.</span><span class=n>uri</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>())</span>
+                <span class=p>.</span><span class=n>retrieve</span><span class=p>()</span>
+                <span class=p>.</span><span class=n>bodyToMono</span><span class=p>(</span><span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
+                <span class=p>.</span><span class=n>block</span><span class=p>()</span>
+            <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=o>?.</span><span class=n>year</span><span class=p>)</span>
+        <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
 
-<span class="n">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span> <span class="p">=</span> <span class="k">false</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">WebClientConfiguration</span> <span class="p">{</span>
+<span class=nd>@Configuration</span><span class=p>(</span><span class=n>proxyBeanMethods</span> <span class=p>=</span> <span class=k>false</span><span class=p>)</span>
+<span class=k>class</span> <span class=nc>WebClientConfiguration</span> <span class=p>{</span>
 
-    <span class="n">@Bean</span>
-    <span class="k">fun</span> <span class="nf">webClient</span><span class="p">():</span> <span class="n">WebClient</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">WebClient</span><span class="p">.</span><span class="n">create</span><span class="p">()</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><p>Notice that we still have to call <code>block()</code> method to retrieve data from the endpoint meaning we are still not non-blocking, but we are getting there :)</p>
-<p>Code for this step is available <a href="https://github.com/mister11/webflux-demo/tree/step2_resttemplate_migration">here</a>.</p>
-<h1 id="resttemplate--endpoint-migration">RestTemplate + endpoint migration<a href="#resttemplate--endpoint-migration" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>Let&rsquo;s combine 2 previous sections and migrate everything except database call to a reactive stack.</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">@GetMapping</span>
-<span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">Flux</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-    <span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-        <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-    <span class="p">};</span>
+    <span class=nd>@Bean</span>
+    <span class=k>fun</span> <span class=nf>webClient</span><span class=p>():</span> <span class=n>WebClient</span> <span class=p>{</span>
+        <span class=k>return</span> <span class=n>WebClient</span><span class=p>.</span><span class=n>create</span><span class=p>()</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></div><p>Notice that we still have to call <code>block()</code> method to retrieve data from the endpoint meaning we are still not non-blocking, but we are getting there :)</p><p>Code for this step is available <a href=https://github.com/mister11/webflux-demo/tree/step2_resttemplate_migration>here</a>.</p><h1 id=resttemplate--endpoint-migration>RestTemplate + endpoint migration<a href=#resttemplate--endpoint-migration class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>Let&rsquo;s combine 2 previous sections and migrate everything except database call to a reactive stack.</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=nd>@GetMapping</span>
+<span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>Flux</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+    <span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+        <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+    <span class=p>};</span>
 
-    <span class="k">return</span> <span class="n">Flux</span><span class="p">.</span><span class="n">fromIterable</span><span class="p">(</span><span class="n">languages</span><span class="p">)</span>
-        <span class="p">.</span><span class="n">flatMap</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-            <span class="c1">// fetch published year for each language
-</span><span class="c1"></span>            <span class="k">val</span> <span class="py">languageYearResponse</span> <span class="p">=</span> <span class="n">webClient</span>
-                <span class="p">.</span><span class="k">get</span><span class="p">()</span>
-                <span class="p">.</span><span class="n">uri</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">())</span>
-                <span class="p">.</span><span class="n">retrieve</span><span class="p">()</span>
-                <span class="p">.</span><span class="n">bodyToMono</span><span class="p">(</span><span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
+    <span class=k>return</span> <span class=n>Flux</span><span class=p>.</span><span class=n>fromIterable</span><span class=p>(</span><span class=n>languages</span><span class=p>)</span>
+        <span class=p>.</span><span class=n>flatMap</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+            <span class=c1>// fetch published year for each language
+</span><span class=c1></span>            <span class=k>val</span> <span class=py>languageYearResponse</span> <span class=p>=</span> <span class=n>webClient</span>
+                <span class=p>.</span><span class=k>get</span><span class=p>()</span>
+                <span class=p>.</span><span class=n>uri</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>())</span>
+                <span class=p>.</span><span class=n>retrieve</span><span class=p>()</span>
+                <span class=p>.</span><span class=n>bodyToMono</span><span class=p>(</span><span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
 
-            <span class="c1">// update language model with a fetched year
-</span><span class="c1"></span>            <span class="n">languageYearResponse</span>
-                <span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">languageYear</span> <span class="p">-&gt;</span> <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="p">.</span><span class="n">year</span><span class="p">)</span> <span class="p">}</span>
-        <span class="p">}</span>
-<span class="p">}</span>
+            <span class=c1>// update language model with a fetched year
+</span><span class=c1></span>            <span class=n>languageYearResponse</span>
+                <span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>languageYear</span> <span class=o>-&gt;</span> <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=p>.</span><span class=n>year</span><span class=p>)</span> <span class=p>}</span>
+        <span class=p>}</span>
+<span class=p>}</span>
 
-<span class="n">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span> <span class="p">=</span> <span class="k">false</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">WebClientConfiguration</span> <span class="p">{</span>
+<span class=nd>@Configuration</span><span class=p>(</span><span class=n>proxyBeanMethods</span> <span class=p>=</span> <span class=k>false</span><span class=p>)</span>
+<span class=k>class</span> <span class=nc>WebClientConfiguration</span> <span class=p>{</span>
 
-    <span class="n">@Bean</span>
-    <span class="k">fun</span> <span class="nf">webClient</span><span class="p">():</span> <span class="n">WebClient</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">WebClient</span><span class="p">.</span><span class="n">create</span><span class="p">()</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><p>So, we&rsquo;ve replaced <code>RestTemplate</code> with <code>WebClient</code>, wrapped languages fetch from a database to a <code>Flux</code>, removed <code>block()</code> call of <code>WebClient</code> call towards external service and made use of <code>flatMap</code> operator that will, for each language, make an API call and update language model returned by the endpoint.</p>
-<p>Code for this step is available <a href="https://github.com/mister11/webflux-demo/tree/step3_endpoint_and_resttemplate_migration">here</a>.</p>
-<h1 id="database">Database<a href="#database" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>Migrating database calls to a reactive stack is the trickiest of all migrations so far. The biggest problem is that JDBC is a blocking driver that does not fit very well to a reactive (non-blocking) model and, to solve that problem, we need a reactive database driver. The good news is that there&rsquo;s is one - <a href="https://r2dbc.io/">R2DBC</a> and Spring <a href="https://spring.io/projects/spring-data-r2dbc">supports it</a> with API similar to the one we used for JDBC, but also provides fluent API that still lacks more advanced features (especially if you are using something like JOOQ). The bad news is that this technology is still really young and, although it is production-ready, most people are not willing to take a risk (which is perfectly reasonable). Also, if you are using libraries like Flyway or Liquibase to manage database transactions, they don&rsquo;t support it (at least not at the time of writing this blog post) so you have to configure both JDBC and R2DBC connections.</p>
-<p>Is there a way around this? Is there a way to use existing, blocking database drivers and libraries but still benefit from the reactive model? Well, there is, but it&rsquo;s a bit controversial. Project Reactor ships with different types of schedulers which enable us to move execution to a background thread and free our main thread. It&rsquo;s a bit more convoluted than this, but we&rsquo;ll get back to that later. First, we will see how to migrate a database call to use reactive database drivers.</p>
-<h2 id="r2dbc">R2DBC<a href="#r2dbc" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>To include all the necessary dependencies for R2DBC to work, you should replace:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">implementation</span><span class="p">(</span><span class="s">&#34;org.springframework.boot:spring-boot-starter-data-jdbc&#34;</span><span class="p">)</span>
-<span class="n">runtimeOnly</span><span class="p">(</span><span class="s">&#34;org.postgresql:postgresql&#34;</span><span class="p">)</span>
-</code></pre></div><p>with:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">implementation</span><span class="p">(</span><span class="s">&#34;org.springframework.boot:spring-boot-starter-data-r2dbc&#34;</span><span class="p">)</span>
-<span class="n">runtimeOnly</span><span class="p">(</span><span class="s">&#34;io.r2dbc:r2dbc-postgresql&#34;</span><span class="p">)</span>
-</code></pre></div><p>and for application properties replace:</p>
-<pre><code>spring.datasource.url=jdbc:postgresql://localhost:5432/webflux-demo-database
+    <span class=nd>@Bean</span>
+    <span class=k>fun</span> <span class=nf>webClient</span><span class=p>():</span> <span class=n>WebClient</span> <span class=p>{</span>
+        <span class=k>return</span> <span class=n>WebClient</span><span class=p>.</span><span class=n>create</span><span class=p>()</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></div><p>So, we&rsquo;ve replaced <code>RestTemplate</code> with <code>WebClient</code>, wrapped languages fetch from a database to a <code>Flux</code>, removed <code>block()</code> call of <code>WebClient</code> call towards external service and made use of <code>flatMap</code> operator that will, for each language, make an API call and update language model returned by the endpoint.</p><p>Code for this step is available <a href=https://github.com/mister11/webflux-demo/tree/step3_endpoint_and_resttemplate_migration>here</a>.</p><h1 id=database>Database<a href=#database class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>Migrating database calls to a reactive stack is the trickiest of all migrations so far. The biggest problem is that JDBC is a blocking driver that does not fit very well to a reactive (non-blocking) model and, to solve that problem, we need a reactive database driver. The good news is that there&rsquo;s is one - <a href=https://r2dbc.io/>R2DBC</a> and Spring <a href=https://spring.io/projects/spring-data-r2dbc>supports it</a> with API similar to the one we used for JDBC, but also provides fluent API that still lacks more advanced features (especially if you are using something like JOOQ). The bad news is that this technology is still really young and, although it is production-ready, most people are not willing to take a risk (which is perfectly reasonable). Also, if you are using libraries like Flyway or Liquibase to manage database transactions, they don&rsquo;t support it (at least not at the time of writing this blog post) so you have to configure both JDBC and R2DBC connections.</p><p>Is there a way around this? Is there a way to use existing, blocking database drivers and libraries but still benefit from the reactive model? Well, there is, but it&rsquo;s a bit controversial. Project Reactor ships with different types of schedulers which enable us to move execution to a background thread and free our main thread. It&rsquo;s a bit more convoluted than this, but we&rsquo;ll get back to that later. First, we will see how to migrate a database call to use reactive database drivers.</p><h2 id=r2dbc>R2DBC<a href=#r2dbc class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h2><p>To include all the necessary dependencies for R2DBC to work, you should replace:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=n>implementation</span><span class=p>(</span><span class=s2>&#34;org.springframework.boot:spring-boot-starter-data-jdbc&#34;</span><span class=p>)</span>
+<span class=n>runtimeOnly</span><span class=p>(</span><span class=s2>&#34;org.postgresql:postgresql&#34;</span><span class=p>)</span>
+</code></pre></div><p>with:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=n>implementation</span><span class=p>(</span><span class=s2>&#34;org.springframework.boot:spring-boot-starter-data-r2dbc&#34;</span><span class=p>)</span>
+<span class=n>runtimeOnly</span><span class=p>(</span><span class=s2>&#34;io.r2dbc:r2dbc-postgresql&#34;</span><span class=p>)</span>
+</code></pre></div><p>and for application properties replace:</p><pre><code>spring.datasource.url=jdbc:postgresql://localhost:5432/webflux-demo-database
 spring.datasource.username=postgres
 spring.datasource.password=postgres
-</code></pre><p>with:</p>
-<pre><code>spring.r2dbc.url=r2dbc:postgresql://localhost:5432/webflux-demo-database
+</code></pre><p>with:</p><pre><code>spring.r2dbc.url=r2dbc:postgresql://localhost:5432/webflux-demo-database
 spring.r2dbc.username=postgres
 spring.r2dbc.password=postgres
-</code></pre><p>This will give you an autoconfigured instance of <code>DatabaseClient</code> that you can inject into your controller and use to fetch data from a database. After this change code looks like this:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="n">@RequestMapping</span><span class="p">(</span><span class="s">&#34;/languages&#34;</span><span class="p">)</span>
-<span class="n">@RestController</span>
-<span class="k">class</span> <span class="nc">LanguagesController</span><span class="p">(</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">webClient</span><span class="p">:</span> <span class="n">WebClient</span><span class="p">,</span>
-    <span class="k">private</span> <span class="k">val</span> <span class="py">databaseClient</span><span class="p">:</span> <span class="n">DatabaseClient</span>
-<span class="p">)</span> <span class="p">{</span>
+</code></pre><p>This will give you an autoconfigured instance of <code>DatabaseClient</code> that you can inject into your controller and use to fetch data from a database. After this change code looks like this:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=nd>@RequestMapping</span><span class=p>(</span><span class=s2>&#34;/languages&#34;</span><span class=p>)</span>
+<span class=nd>@RestController</span>
+<span class=k>class</span> <span class=nc>LanguagesController</span><span class=p>(</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>webClient</span><span class=p>:</span> <span class=n>WebClient</span><span class=p>,</span>
+    <span class=k>private</span> <span class=k>val</span> <span class=py>databaseClient</span><span class=p>:</span> <span class=n>DatabaseClient</span>
+<span class=p>)</span> <span class=p>{</span>
 
-    <span class="n">@GetMapping</span>
-    <span class="k">fun</span> <span class="nf">getLanguages</span><span class="p">():</span> <span class="n">Flux</span><span class="p">&lt;</span><span class="n">Language</span><span class="p">&gt;</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="n">databaseClient</span><span class="p">.</span><span class="n">select</span><span class="p">().</span><span class="n">from</span><span class="p">(</span><span class="s">&#34;languages&#34;</span><span class="p">).</span><span class="n">`as`</span><span class="p">(</span><span class="n">Language</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">).</span><span class="n">fetch</span><span class="p">().</span><span class="n">all</span><span class="p">()</span>
-            <span class="p">.</span><span class="n">flatMap</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-                <span class="c1">// fetch published year for each language
-</span><span class="c1"></span>                <span class="k">val</span> <span class="py">languageYearResponse</span> <span class="p">=</span> <span class="n">webClient</span>
-                    <span class="p">.</span><span class="k">get</span><span class="p">()</span>
-                    <span class="p">.</span><span class="n">uri</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">())</span>
-                    <span class="p">.</span><span class="n">retrieve</span><span class="p">()</span>
-                    <span class="p">.</span><span class="n">bodyToMono</span><span class="p">(</span><span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
+    <span class=nd>@GetMapping</span>
+    <span class=k>fun</span> <span class=nf>getLanguages</span><span class=p>():</span> <span class=n>Flux</span><span class=p>&lt;</span><span class=n>Language</span><span class=p>&gt;</span> <span class=p>{</span>
+        <span class=k>return</span> <span class=n>databaseClient</span><span class=p>.</span><span class=n>select</span><span class=p>().</span><span class=n>from</span><span class=p>(</span><span class=s2>&#34;languages&#34;</span><span class=p>).</span><span class=nd>`as</span><span class=err>`</span><span class=p>(</span><span class=n>Language</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>).</span><span class=n>fetch</span><span class=p>().</span><span class=n>all</span><span class=p>()</span>
+            <span class=p>.</span><span class=n>flatMap</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+                <span class=c1>// fetch published year for each language
+</span><span class=c1></span>                <span class=k>val</span> <span class=py>languageYearResponse</span> <span class=p>=</span> <span class=n>webClient</span>
+                    <span class=p>.</span><span class=k>get</span><span class=p>()</span>
+                    <span class=p>.</span><span class=n>uri</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>())</span>
+                    <span class=p>.</span><span class=n>retrieve</span><span class=p>()</span>
+                    <span class=p>.</span><span class=n>bodyToMono</span><span class=p>(</span><span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
 
-                <span class="c1">// update language model with a fetched year
-</span><span class="c1"></span>                <span class="n">languageYearResponse</span>
-                    <span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">languageYear</span> <span class="p">-&gt;</span> <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="p">.</span><span class="n">year</span><span class="p">)</span> <span class="p">}</span>
-            <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div><p>The only other change is the way we are fetching languages from the database. We are using fluent API that fetches all the data from the table <code>languages</code> and converts that to <code>Language</code> object. Everything after that line is the same as before.</p>
-<p>If you play around with this API, you&rsquo;ll notice that there&rsquo;s a variant of the <code>from</code> method that can accept class directly, but that is not possible in our case since the class name is <code>Language</code> (singular) and table name is <code>languages</code> (plural). Generally, if you stick with the mapping rules of this fluent API, you can use it for all simple queries that you might need, but API also supports raw queries for maximum flexibility and control.</p>
-<p>Code for this step is <a href="https://github.com/mister11/webflux-demo/tree/step4_r2dbc">here</a>.</p>
-<h2 id="jdbc-with-schedulers">JDBC with schedulers<a href="#jdbc-with-schedulers" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>Before we start the migration of the blocking JDBC to a non-blocking version, we have to talk about the downsides of this approach and why it is not something you might want to do. As we saw before, using the reactive programming model enables an application to process more requests in parallel by simply delegating work to other components instead of blocking your app. Interestingly enough, this is achieved by running only a few threads in parallel and that number is equal to the number of cores of your CPU. So, when you include Spring Webflux starter (without Spring MVC starter), you get a number of CPU threads that are run by the Netty server in an event loop. When a request (event) comes, it gets dispatched to some other component (<code>WebClient</code>, <code>DatabaseClient</code>, reactive MQ client, etc.) and a thread that processed an event is free to handle a new event. When data is ready, one of the threads will take it and dispatch it further (maybe to some other component, maybe to the caller). For comparison, in the standard Spring MVC application you, by default, have Tomcat server that is running 200 thread in parallel and each gets blocked by a new request (if the execution is not manually moved to another thread). This might seem a lot, but image having a system with thousands of requests per second and you can assume your application will start throttling fast.</p>
-<p>Now that we understand Netty&rsquo;s threading model a bit better, we can kinda guess what might be the problem of using anything blocking in the Spring WebFlux application. With only a few threads available, we have to be extremely careful not to block any of it as that could be disastrous for our application. Luckily, there&rsquo;s a way to avoid that (to some extent).</p>
-<p>Schedulers are a powerful concept that enables you to switch execution thread whenever you want to whichever thread you want. Even better, this is done by using a familiar concept of an operator, specifically <code>subscribeOn</code>, which accepts an instance of a <code>Scheduler</code> interface. Project Reactor offers quite a few of them out of the box, but I&rsquo;ll focus on <code>boundedElastic</code> scheduler in this post. The idea behind it is simple - create a bounded pool of <code>ExecutorService</code> workers on demand, reuse them if they are free, or simply remove them if they have not been used for some time (60 seconds by default). An important thing to notice here is that pool is bounded. There&rsquo;s also <code>elastic</code> scheduler available that can create an unbounded pool of threads, but this can cause headaches if an application starts uncontrollably creating new threads.</p>
-<p>So, to recap - we are using blocking API in an application that has only a few available threads at any given time and we are using a bounded pool of background threads to prevent blocking of main threads. How can we be sure that we will not run out of background threads? Well, we cannot be. <code>boundedElastic</code> scheduler, by default, has a limit of 10x the number of CPU cores threads that it will create before crashing and each thread has a queue of 100 000 tasks that can be scheduled to run on it. This is a pretty huge number of tasks that we can start, right? Again, it depends on the application load. If you are sure this limit will not be reached, I&rsquo;d say using this approach with blocking API is fine and will work fine. Sure, you are not getting 100% percent out of the whole reactive model, but it&rsquo;s still something. In the end, if you decide to use R2DBC at any point, you&rsquo;ll only need to update code in the repository layer.</p>
-<p>This should be enough details about the internals of schedulers and it&rsquo;s time to look at how can we do that in code. For this, we will be using a <a href="https://github.com/mister11/webflux-demo/tree/step3_endpoint_and_resttemplate_migration">version</a> of the application before migration to R2DBC since we want to have blocking JDBC driver in place. So, our code that fetches languages from a database looks like this:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-    <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-<span class="p">};</span>
-</code></pre></div><p>In the previous article, we&rsquo;ve learned that wrapping a blocking piece of code in <code>Mono.just</code> or <code>Flux.fromIterable</code> will cause an expression to be executed immediately and that a better approach is to use something like <code>Mono.fromSupplier</code> which is exactly what we need in this case.</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">val</span> <span class="py">languages</span> <span class="p">=</span> <span class="n">Mono</span><span class="p">.</span><span class="n">fromSupplier</span> <span class="p">{</span>
-    <span class="n">jdbcTemplate</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s">&#34;select * from languages&#34;</span><span class="p">)</span> <span class="p">{</span> <span class="n">rs</span><span class="p">:</span> <span class="n">ResultSet</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Int</span> <span class="p">-&gt;</span>
-        <span class="n">Language</span><span class="p">(</span><span class="n">name</span> <span class="p">=</span> <span class="n">rs</span><span class="p">.</span><span class="n">getString</span><span class="p">(</span><span class="s">&#34;name&#34;</span><span class="p">))</span>
-    <span class="p">};</span>
-<span class="p">}</span>
-</code></pre></div><p>The problem is that this now breaks rest of the code that goes to an external service to fetch more data about each language. This is because <code>JdbcTemplate</code> is returning a list which means we have a <code>Mono&lt;List&lt;Language&gt;&gt;</code>, but we need <code>Flux&lt;Language&gt;</code>. One simple trick here is to use <code>flatMapIterable</code> operator that will do that conversion conversion:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">return</span> <span class="n">languages</span>
-    <span class="p">.</span><span class="n">flatMapIterable</span> <span class="p">{</span> <span class="n">it</span> <span class="p">}</span>
-    <span class="p">.</span><span class="n">flatMap</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-        <span class="c1">// fetch published year for each language
-</span><span class="c1"></span>        <span class="k">val</span> <span class="py">languageYearResponse</span> <span class="p">=</span> <span class="n">webClient</span>
-            <span class="p">.</span><span class="k">get</span><span class="p">()</span>
-            <span class="p">.</span><span class="n">uri</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">())</span>
-            <span class="p">.</span><span class="n">retrieve</span><span class="p">()</span>
-            <span class="p">.</span><span class="n">bodyToMono</span><span class="p">(</span><span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
+                <span class=c1>// update language model with a fetched year
+</span><span class=c1></span>                <span class=n>languageYearResponse</span>
+                    <span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>languageYear</span> <span class=o>-&gt;</span> <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=p>.</span><span class=n>year</span><span class=p>)</span> <span class=p>}</span>
+            <span class=p>}</span>
+    <span class=p>}</span>
+<span class=p>}</span>
+</code></pre></div><p>The only other change is the way we are fetching languages from the database. We are using fluent API that fetches all the data from the table <code>languages</code> and converts that to <code>Language</code> object. Everything after that line is the same as before.</p><p>If you play around with this API, you&rsquo;ll notice that there&rsquo;s a variant of the <code>from</code> method that can accept class directly, but that is not possible in our case since the class name is <code>Language</code> (singular) and table name is <code>languages</code> (plural). Generally, if you stick with the mapping rules of this fluent API, you can use it for all simple queries that you might need, but API also supports raw queries for maximum flexibility and control.</p><p>Code for this step is <a href=https://github.com/mister11/webflux-demo/tree/step4_r2dbc>here</a>.</p><h2 id=jdbc-with-schedulers>JDBC with schedulers<a href=#jdbc-with-schedulers class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h2><p>Before we start the migration of the blocking JDBC to a non-blocking version, we have to talk about the downsides of this approach and why it is not something you might want to do. As we saw before, using the reactive programming model enables an application to process more requests in parallel by simply delegating work to other components instead of blocking your app. Interestingly enough, this is achieved by running only a few threads in parallel and that number is equal to the number of cores of your CPU. So, when you include Spring Webflux starter (without Spring MVC starter), you get a number of CPU threads that are run by the Netty server in an event loop. When a request (event) comes, it gets dispatched to some other component (<code>WebClient</code>, <code>DatabaseClient</code>, reactive MQ client, etc.) and a thread that processed an event is free to handle a new event. When data is ready, one of the threads will take it and dispatch it further (maybe to some other component, maybe to the caller). For comparison, in the standard Spring MVC application you, by default, have Tomcat server that is running 200 thread in parallel and each gets blocked by a new request (if the execution is not manually moved to another thread). This might seem a lot, but image having a system with thousands of requests per second and you can assume your application will start throttling fast.</p><p>Now that we understand Netty&rsquo;s threading model a bit better, we can kinda guess what might be the problem of using anything blocking in the Spring WebFlux application. With only a few threads available, we have to be extremely careful not to block any of it as that could be disastrous for our application. Luckily, there&rsquo;s a way to avoid that (to some extent).</p><p>Schedulers are a powerful concept that enables you to switch execution thread whenever you want to whichever thread you want. Even better, this is done by using a familiar concept of an operator, specifically <code>subscribeOn</code>, which accepts an instance of a <code>Scheduler</code> interface. Project Reactor offers quite a few of them out of the box, but I&rsquo;ll focus on <code>boundedElastic</code> scheduler in this post. The idea behind it is simple - create a bounded pool of <code>ExecutorService</code> workers on demand, reuse them if they are free, or simply remove them if they have not been used for some time (60 seconds by default). An important thing to notice here is that pool is bounded. There&rsquo;s also <code>elastic</code> scheduler available that can create an unbounded pool of threads, but this can cause headaches if an application starts uncontrollably creating new threads.</p><p>So, to recap - we are using blocking API in an application that has only a few available threads at any given time and we are using a bounded pool of background threads to prevent blocking of main threads. How can we be sure that we will not run out of background threads? Well, we cannot be. <code>boundedElastic</code> scheduler, by default, has a limit of 10x the number of CPU cores threads that it will create before crashing and each thread has a queue of 100 000 tasks that can be scheduled to run on it. This is a pretty huge number of tasks that we can start, right? Again, it depends on the application load. If you are sure this limit will not be reached, I&rsquo;d say using this approach with blocking API is fine and will work fine. Sure, you are not getting 100% percent out of the whole reactive model, but it&rsquo;s still something. In the end, if you decide to use R2DBC at any point, you&rsquo;ll only need to update code in the repository layer.</p><p>This should be enough details about the internals of schedulers and it&rsquo;s time to look at how can we do that in code. For this, we will be using a <a href=https://github.com/mister11/webflux-demo/tree/step3_endpoint_and_resttemplate_migration>version</a> of the application before migration to R2DBC since we want to have blocking JDBC driver in place. So, our code that fetches languages from a database looks like this:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+    <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+<span class=p>};</span>
+</code></pre></div><p>In the previous article, we&rsquo;ve learned that wrapping a blocking piece of code in <code>Mono.just</code> or <code>Flux.fromIterable</code> will cause an expression to be executed immediately and that a better approach is to use something like <code>Mono.fromSupplier</code> which is exactly what we need in this case.</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=k>val</span> <span class=py>languages</span> <span class=p>=</span> <span class=n>Mono</span><span class=p>.</span><span class=n>fromSupplier</span> <span class=p>{</span>
+    <span class=n>jdbcTemplate</span><span class=p>.</span><span class=n>query</span><span class=p>(</span><span class=s2>&#34;select * from languages&#34;</span><span class=p>)</span> <span class=p>{</span> <span class=n>rs</span><span class=p>:</span> <span class=n>ResultSet</span><span class=p>,</span> <span class=n>_</span><span class=p>:</span> <span class=n>Int</span> <span class=o>-&gt;</span>
+        <span class=n>Language</span><span class=p>(</span><span class=n>name</span> <span class=p>=</span> <span class=n>rs</span><span class=p>.</span><span class=n>getString</span><span class=p>(</span><span class=s2>&#34;name&#34;</span><span class=p>))</span>
+    <span class=p>};</span>
+<span class=p>}</span>
+</code></pre></div><p>The problem is that this now breaks rest of the code that goes to an external service to fetch more data about each language. This is because <code>JdbcTemplate</code> is returning a list which means we have a <code>Mono&lt;List&lt;Language>></code>, but we need <code>Flux&lt;Language></code>. One simple trick here is to use <code>flatMapIterable</code> operator that will do that conversion conversion:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=k>return</span> <span class=n>languages</span>
+    <span class=p>.</span><span class=n>flatMapIterable</span> <span class=p>{</span> <span class=k>it</span> <span class=p>}</span>
+    <span class=p>.</span><span class=n>flatMap</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+        <span class=c1>// fetch published year for each language
+</span><span class=c1></span>        <span class=k>val</span> <span class=py>languageYearResponse</span> <span class=p>=</span> <span class=n>webClient</span>
+            <span class=p>.</span><span class=k>get</span><span class=p>()</span>
+            <span class=p>.</span><span class=n>uri</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>())</span>
+            <span class=p>.</span><span class=n>retrieve</span><span class=p>()</span>
+            <span class=p>.</span><span class=n>bodyToMono</span><span class=p>(</span><span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
 
-        <span class="c1">// update language model with a fetched year
-</span><span class="c1"></span>        <span class="n">languageYearResponse</span>
-            <span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">languageYear</span> <span class="p">-&gt;</span> <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="p">.</span><span class="n">year</span><span class="p">)</span> <span class="p">}</span>
-    <span class="p">}</span>
-</code></pre></div><p>It might look a bit magical, but it&rsquo;s really simple - mapper function returns an <code>Iterable</code> type which is then processed so that it returns one item at the time which basically flattens that <code>Iterable</code> (therefore, the name :)).</p>
-<p>But we still have an issue of the blocking call that&rsquo;s executed on the main thread. To fix this, we use described <code>boundedElastic</code> scheduler:</p>
-<div class="highlight"><pre class="chroma"><code class="language-kotlin" data-lang="kotlin"><span class="k">return</span> <span class="n">languages</span>
-    <span class="p">.</span><span class="n">flatMapIterable</span> <span class="p">{</span> <span class="n">it</span> <span class="p">}</span>
-    <span class="p">.</span><span class="n">flatMap</span> <span class="p">{</span> <span class="n">language</span> <span class="p">-&gt;</span>
-        <span class="c1">// fetch published year for each language
-</span><span class="c1"></span>        <span class="k">val</span> <span class="py">languageYearResponse</span> <span class="p">=</span> <span class="n">webClient</span>
-            <span class="p">.</span><span class="k">get</span><span class="p">()</span>
-            <span class="p">.</span><span class="n">uri</span><span class="p">(</span><span class="n">urls</span><span class="p">[</span><span class="n">language</span><span class="p">.</span><span class="n">name</span><span class="p">].</span><span class="n">toString</span><span class="p">())</span>
-            <span class="p">.</span><span class="n">retrieve</span><span class="p">()</span>
-            <span class="p">.</span><span class="n">bodyToMono</span><span class="p">(</span><span class="n">LanguageYear</span><span class="o">::</span><span class="k">class</span><span class="p">.</span><span class="n">java</span><span class="p">)</span>
+        <span class=c1>// update language model with a fetched year
+</span><span class=c1></span>        <span class=n>languageYearResponse</span>
+            <span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>languageYear</span> <span class=o>-&gt;</span> <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=p>.</span><span class=n>year</span><span class=p>)</span> <span class=p>}</span>
+    <span class=p>}</span>
+</code></pre></div><p>It might look a bit magical, but it&rsquo;s really simple - mapper function returns an <code>Iterable</code> type which is then processed so that it returns one item at the time which basically flattens that <code>Iterable</code> (therefore, the name :)).</p><p>But we still have an issue of the blocking call that&rsquo;s executed on the main thread. To fix this, we use described <code>boundedElastic</code> scheduler:</p><div class=highlight><pre class=chroma><code class=language-kotlin data-lang=kotlin><span class=k>return</span> <span class=n>languages</span>
+    <span class=p>.</span><span class=n>flatMapIterable</span> <span class=p>{</span> <span class=k>it</span> <span class=p>}</span>
+    <span class=p>.</span><span class=n>flatMap</span> <span class=p>{</span> <span class=n>language</span> <span class=o>-&gt;</span>
+        <span class=c1>// fetch published year for each language
+</span><span class=c1></span>        <span class=k>val</span> <span class=py>languageYearResponse</span> <span class=p>=</span> <span class=n>webClient</span>
+            <span class=p>.</span><span class=k>get</span><span class=p>()</span>
+            <span class=p>.</span><span class=n>uri</span><span class=p>(</span><span class=n>urls</span><span class=p>[</span><span class=n>language</span><span class=p>.</span><span class=n>name</span><span class=p>].</span><span class=n>toString</span><span class=p>())</span>
+            <span class=p>.</span><span class=n>retrieve</span><span class=p>()</span>
+            <span class=p>.</span><span class=n>bodyToMono</span><span class=p>(</span><span class=n>LanguageYear</span><span class=o>::</span><span class=k>class</span><span class=p>.</span><span class=n>java</span><span class=p>)</span>
 
-        <span class="c1">// update language model with a fetched year
-</span><span class="c1"></span>        <span class="n">languageYearResponse</span>
-            <span class="p">.</span><span class="n">map</span> <span class="p">{</span> <span class="n">languageYear</span> <span class="p">-&gt;</span> <span class="n">language</span><span class="p">.</span><span class="n">copy</span><span class="p">(</span><span class="n">year</span> <span class="p">=</span> <span class="n">languageYear</span><span class="p">.</span><span class="n">year</span><span class="p">)</span> <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="p">.</span><span class="n">subscribeOn</span><span class="p">(</span><span class="n">Schedulers</span><span class="p">.</span><span class="n">boundedElastic</span><span class="p">())</span>
-</code></pre></div><p>It doesn&rsquo;t matter where you put <code>subscribeOn</code> operator in the chain, so it&rsquo;s usually at the top or the bottom of the chain. If you check out thread name in this case, you&rsquo;ll see that it is not the same one that&rsquo;s used for other parts of the chain which is exactly what we want. If you are wondering why you don&rsquo;t have to worry about data availability and synchronization, you can thank the creators of Project Reactor.</p>
-<p>Code for this step is <a href="https://github.com/mister11/webflux-demo/tree/step4_jdbc_with_scheduler">here</a>.</p>
-<h1 id="final-step">Final step<a href="#final-step" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>We&rsquo;ve finally migrated our whole application a reactive stack (even if we cheated a bit with JDBC and scheduler). At this moment, you can completely remove Spring Web starter dependency and leave only WebFlux one which will cause Netty server to start by default and this will mark the end of the migration :)</p>
-<p>Code for this step is <a href="https://github.com/mister11/webflux-demo/tree/step5_finale">here</a>.</p>
-<h1 id="conclusion">Conclusion<a href="#conclusion" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h1>
-<p>Spring team did an amazing job to make migration as seamless as possible. Reactive APIs in Spring are a norm so every part of the framework is covered, but have in mind that this is still not something that is battle-tested and proven as much as a standard Spring MVC. In the community that is slow and usually lives a few years in the past (just look at how many people are still using Java 8), this might be a dealbreaker and it might be hard to adopt it in general, but in the world of smaller services that are under a high load, it might pay of. Even if it doesn&rsquo;t, it&rsquo;s a smaller piece of code so it can easily be converted to Spring MVC.</p>
-<p>In the next article, we will see how to make routes definition functional and what does this change in terms of request/response handling, and then we will see how to test reactive code. Shortly after that, we will introduce Kotlin Coroutines and see how to migrate this Spring WebFlux application to them.</p>
-
-			</div>
-			<hr class="post-end">
-			<footer class="post-info">
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>3284 Words</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>18 Jun 2020</p>
-			</footer>
-		</article>
-		<div class="post-nav thin">
-			<a class="prev-post" href="https://mister11.github.io/posts/project_reactor_intro/">
-				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Introduction to Project Reactor</span>
-			</a>
-		</div>
-		<div id="comments" class="thin">
-</div>
-	</main>
-
-	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
-		<p>&copy; 2020 <a href="https://mister11.github.io/">Sven Vidak</a></p>
-		<p>
-			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://mister11.github.io/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
-		</p>
-	</footer>
-
-
-
-	<script src="https://mister11.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js" integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin="anonymous"></script>
-	
-<script type="application/javascript">
-var doNotTrack = false;
-if (!doNotTrack) {
-	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-	ga('create', 'UA-153557863-1', 'auto');
-	
-	ga('send', 'pageview');
-}
-</script>
-<script async src='https://www.google-analytics.com/analytics.js'></script>
-
-
-</body>
-
-</html>
+        <span class=c1>// update language model with a fetched year
+</span><span class=c1></span>        <span class=n>languageYearResponse</span>
+            <span class=p>.</span><span class=n>map</span> <span class=p>{</span> <span class=n>languageYear</span> <span class=o>-&gt;</span> <span class=n>language</span><span class=p>.</span><span class=n>copy</span><span class=p>(</span><span class=n>year</span> <span class=p>=</span> <span class=n>languageYear</span><span class=p>.</span><span class=n>year</span><span class=p>)</span> <span class=p>}</span>
+    <span class=p>}</span>
+    <span class=p>.</span><span class=n>subscribeOn</span><span class=p>(</span><span class=n>Schedulers</span><span class=p>.</span><span class=n>boundedElastic</span><span class=p>())</span>
+</code></pre></div><p>It doesn&rsquo;t matter where you put <code>subscribeOn</code> operator in the chain, so it&rsquo;s usually at the top or the bottom of the chain. If you check out thread name in this case, you&rsquo;ll see that it is not the same one that&rsquo;s used for other parts of the chain which is exactly what we want. If you are wondering why you don&rsquo;t have to worry about data availability and synchronization, you can thank the creators of Project Reactor.</p><p>Code for this step is <a href=https://github.com/mister11/webflux-demo/tree/step4_jdbc_with_scheduler>here</a>.</p><h1 id=final-step>Final step<a href=#final-step class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>We&rsquo;ve finally migrated our whole application a reactive stack (even if we cheated a bit with JDBC and scheduler). At this moment, you can completely remove Spring Web starter dependency and leave only WebFlux one which will cause Netty server to start by default and this will mark the end of the migration :)</p><p>Code for this step is <a href=https://github.com/mister11/webflux-demo/tree/step5_finale>here</a>.</p><h1 id=conclusion>Conclusion<a href=#conclusion class=anchor aria-hidden=true><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></a></h1><p>Spring team did an amazing job to make migration as seamless as possible. Reactive APIs in Spring are a norm so every part of the framework is covered, but have in mind that this is still not something that is battle-tested and proven as much as a standard Spring MVC. In the community that is slow and usually lives a few years in the past (just look at how many people are still using Java 8), this might be a dealbreaker and it might be hard to adopt it in general, but in the world of smaller services that are under a high load, it might pay of. Even if it doesn&rsquo;t, it&rsquo;s a smaller piece of code so it can easily be converted to Spring MVC.</p><p>In the next article, will see how to test code that we wrote in this article and how can we replicate production environment in our tests.</p></div><hr class=post-end><footer class=post-info><p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>3258 Words</p><p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>18 Jun 2020</p></footer></article><div class="post-nav thin"><a class=next-post href=https://mister11.github.io/posts/testing_spring_webflux_application/><span class=post-nav-label><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>&nbsp;Newer</span><br><span>Testing Spring WebFlux Applications</span></a>
+<a class=prev-post href=https://mister11.github.io/posts/project_reactor_intro/><span class=post-nav-label>Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span><br><span>Introduction to Project Reactor</span></a></div><div id=comments class=thin></div></main><footer id=site-footer class="section-inner thin animated fadeIn faster"><p>&copy; 2021 <a href=https://mister11.github.io/>Sven Vidak</a></p><p>Made with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a> &#183; Theme <a href=https://github.com/Track3/hermit target=_blank rel=noopener>Hermit</a> &#183; <a href=https://mister11.github.io/posts/index.xml target=_blank title=rss><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 019 9"/><path d="M4 4a16 16 0 0116 16"/><circle cx="5" cy="19" r="1"/></svg></a></p></footer><script src=https://mister11.github.io/js/bundle.min.4a9a0ac3d2217822c7865b4161e6c2a71de1d70492264337755427898dd718f6.js integrity="sha256-SpoKw9IheCLHhltBYebCpx3h1wSSJkM3dVQniY3XGPY=" crossorigin=anonymous></script><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;ga('create','UA-153557863-1','auto');ga('send','pageview');}</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
